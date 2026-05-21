@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Gem — Hidden Spots</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8f5f0;--white:#fff;--border:#ede7dc;--border2:#e2d8cc;--text:#1e1812;--t2:#6b5e52;--t3:#a8998a;--green:#3d7a47;--gbg:#eef5ef;--gborder:rgba(61,122,71,0.2);--orange:#e07b3a;--obg:#fef2eb;--oborder:rgba(224,123,58,0.2);--blue:#3a7db5;--bbg:#eef3fa;--yellow:#d4a017;--ybg:#fdf6e3;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden;}
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s;}
+.si{width:90px;height:90px;border-radius:28px;background:linear-gradient(145deg,#4a8f56,#3d7a47);display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:20px;box-shadow:0 12px 40px rgba(61,122,71,.3);animation:br 2.5s ease-in-out infinite;}
+@keyframes br{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.sn{font-family:'Lora',serif;font-size:44px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.st{font-size:13px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;animation:fd 1.5s ease-in-out infinite alternate;}
+@keyframes fd{from{opacity:.4}to{opacity:1}}
+#app{display:none;min-height:100vh;padding-bottom:64px;}
+#app.show{display:block;animation:rise .5s ease;}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.screen{display:none;}.screen.on{display:block;animation:rise .3s ease;}
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:white;border-top:1.5px solid var(--border);display:flex;height:68px;box-shadow:0 -4px 24px rgba(0,0,0,.06);z-index:100;align-items:center;padding:0 4px;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;cursor:pointer;padding:10px 4px;transition:all .2s;}
+.nb svg{width:22px;height:22px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
+.nb.on svg{stroke:var(--green);}
+.nb-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);transition:color .2s;}
+.nb.on .nb-label{color:var(--green);}
+/* HEADER */
+.hdr{background:white;padding:20px 20px 16px;border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:50;}
+.htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.aname{font-family:'Lora',serif;font-size:26px;font-weight:600;color:var(--text);}
+.vpill{display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border2);border-radius:100px;padding:6px 12px;cursor:pointer;transition:all .25s;font-size:12px;font-weight:700;color:var(--t2);}
+.vpill.on{background:var(--gbg);border-color:var(--gborder);color:var(--green);}
+.vdot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:background .25s;}
+.vpill.on .vdot{background:var(--green);}
+.crow{display:flex;align-items:center;gap:8px;}
+.clbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;}
+.cbtn{display:flex;align-items:center;gap:5px;background:var(--bg);border:1.5px solid var(--border2);border-radius:100px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .2s;}
+.cbtn:hover{border-color:var(--green);color:var(--green);}
+.sbar{display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border2);border-radius:14px;padding:11px 14px;margin-top:12px;transition:border-color .2s;}
+.sbar:focus-within{border-color:var(--green);background:white;}
+.sbar input{flex:1;border:none;background:none;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;}
+.sbar input::placeholder{color:var(--t3);}
+.chips-wrap{position:relative;}
+.chips-wrap::after{content:'';position:absolute;right:0;top:0;height:100%;width:40px;background:linear-gradient(to right,transparent,white);pointer-events:none;}
+.chips{display:flex;gap:8px;padding:14px 20px;overflow-x:auto;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border2);background:white;color:var(--t2);transition:all .2s;white-space:nowrap;}
+.chip.on{background:var(--green);border-color:var(--green);color:white;}
+.free-banner-strip{margin:0 20px 4px;background:var(--obg);border:1.5px solid var(--oborder);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--t2);}
+
+.vbanner{margin:0 20px 4px;background:var(--gbg);border:1.5px solid var(--gborder);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);}
+.sw{padding:8px 20px 20px;}
+.slbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:14px;}
+/* SPOT CARDS WITH PHOTOS */
+.sc{background:white;border-radius:20px;border:1.5px solid var(--border);margin-bottom:16px;overflow:hidden;cursor:pointer;box-shadow:0 2px 16px rgba(0,0,0,.05);transition:all .22s;animation:cardIn .4s ease both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sc:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.1);}
+.sc:active{transform:scale(.99);}
+/* Photo banner */
+.sphoto{width:100%;height:160px;object-fit:cover;display:block;position:relative;}
+.sphoto-wrap{position:relative;overflow:hidden;height:160px;background:var(--bg);}
+.sphoto-img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
+.sc:hover .sphoto-img{transform:scale(1.04);}
+.sphoto-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(30,24,18,0.55));pointer-events:none;}
+.sphoto-badges{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;}
+.frib{background:var(--yellow);color:white;font-size:10px;font-weight:800;letter-spacing:.06em;padding:4px 10px;border-radius:100px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.vrib{background:var(--green);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.sbody{padding:14px 16px 16px;}
+.smeta{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.scat{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+.cres{background:var(--obg);color:var(--orange);}
+.ccaf{background:#f5f0e8;color:#8a7050;}
+.cbar{background:#f0eef8;color:#6050a0;}
+.cpar{background:var(--gbg);color:var(--green);}
+.cgal{background:var(--ybg);color:var(--yellow);}
+.cvp{background:var(--bbg);color:var(--blue);}
+.shood{font-size:11px;font-weight:700;color:var(--t3);}
+.sname{font-family:'Lora',serif;font-size:19px;font-weight:600;color:var(--text);line-height:1.25;margin-bottom:6px;}
+.sdesc{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.sfooter{display:flex;justify-content:space-between;align-items:center;}
+.ssaves{font-size:12px;font-weight:700;color:var(--t3);}
+.svbtn{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s;color:var(--t3);}
+.svbtn.saved{background:var(--obg);border-color:var(--oborder);color:var(--orange);}
+
+.sc-locked{cursor:pointer;position:relative;overflow:hidden;border:1.5px dashed var(--border2);}
+.sc-locked:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.1);}
+.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px;background:rgba(248,245,240,0.15);backdrop-filter:blur(2px);}
+.locked-icon{font-size:32px;margin-bottom:4px;}
+.locked-cat{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);}
+.locked-title{font-family:'Lora',serif;font-size:22px;font-weight:600;color:white;text-shadow:0 2px 8px rgba(0,0,0,.3);}
+.locked-sub{font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:4px;}
+.locked-btn{background:white;color:var(--text);border:none;border-radius:100px;padding:9px 20px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.locked-btn:hover{background:var(--green);color:white;transform:scale(1.04);}
+
+.empty{text-align:center;padding:60px 20px;}
+.empty-emoji{font-size:48px;margin-bottom:12px;}
+.empty-title{font-family:'Lora',serif;font-size:20px;font-weight:500;color:var(--t2);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--t3);}
+/* MAP */
+#map-screen{padding:20px;}
+
+
+
+
+
+
+
+
+
+
+
+.mcards{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;}
+.mcards::-webkit-scrollbar{display:none;}
+.mcard{flex-shrink:0;width:130px;background:white;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s;}
+.mcard:hover{border-color:var(--green);transform:translateY(-2px);}
+.mcard-img{width:100%;height:70px;object-fit:cover;}
+.mcard-body{padding:8px 10px 10px;}
+.mc-name{font-family:'Lora',serif;font-size:13px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:2px;}
+.mc-hood{font-size:10px;font-weight:700;color:var(--t3);}
+/* EVENTS */
+#events-screen{padding:20px;}
+.ecard{background:white;border:1.5px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.ecard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.09);}
+.ecard-img{width:100%;height:100px;object-fit:cover;}
+.ecard-body{padding:14px 16px 16px;}
+.etop{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;}
+.etitle{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px;}
+.espot{font-size:11px;font-weight:700;color:var(--t3);}
+.epbox{text-align:right;flex-shrink:0;margin-left:auto;}
+.eprice{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--green);}
+.eprice.paid{color:var(--orange);}
+.eplbl{font-size:10px;color:var(--t3);font-weight:700;}
+.edesc{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ebot{display:flex;justify-content:space-between;align-items:center;}
+.edate{font-size:12px;font-weight:700;color:var(--t2);}
+.eleft{font-size:12px;font-weight:700;color:var(--green);}
+.ebadge{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:100px;background:var(--obg);color:var(--orange);}
+.ebadge.free{background:var(--gbg);color:var(--green);}
+/* SAVED */
+#saved-screen{padding:20px;}
+/* PROFILE */
+#profile-screen{padding:20px;}
+.phero{background:white;border:1.5px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.pav{width:60px;height:60px;border-radius:50%;background:linear-gradient(145deg,var(--gbg),#d4ecd8);border:2.5px solid var(--gborder);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.pname{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.psince{font-size:12px;font-weight:600;color:var(--t3);}
+.sgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.sbox{background:white;border:1.5px solid var(--border);border-radius:16px;padding:14px;text-align:center;}
+.sval{font-family:'Lora',serif;font-size:28px;font-weight:600;color:var(--green);display:block;}
+.slabel{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);}
+/* SUBMIT SPOT SECTION */
+.submit-card{background:white;border:1.5px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.submit-header{background:linear-gradient(135deg,#eef5ef,#d8eedd);padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .2s;}
+.submit-header:hover{background:linear-gradient(135deg,#d8eedd,#c8e8d0);}
+.submit-header-icon{font-size:28px;}
+.submit-header-title{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--green);}
+.submit-header-sub{font-size:12px;color:var(--t2);margin-top:2px;}
+.submit-header-arrow{margin-left:auto;font-size:18px;color:var(--green);transition:transform .3s;}
+.submit-header-arrow.open{transform:rotate(90deg);}
+.submit-form{padding:18px;border-top:1.5px solid var(--border);display:none;}
+.submit-form.open{display:block;animation:rise .3s ease;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;display:block;}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;resize:none;}
+.form-input:focus{border-color:var(--green);background:white;}
+.form-input::placeholder{color:var(--t3);}
+.form-select{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a8998a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.form-select:focus{border-color:var(--green);background-color:white;}
+.vegan-check{display:flex;align-items:center;gap:10px;background:var(--gbg);border:1.5px solid var(--gborder);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .2s;}
+.vegan-check input{width:18px;height:18px;accent-color:var(--green);cursor:pointer;}
+.vegan-check-label{font-size:14px;font-weight:700;color:var(--green);}
+.photo-upload{border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.photo-upload:hover{border-color:var(--green);background:var(--gbg);}
+.photo-upload-icon{font-size:28px;margin-bottom:6px;}
+.photo-upload-text{font-size:13px;font-weight:700;color:var(--t2);}
+.photo-upload-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+.submit-btn{background:linear-gradient(135deg,#4a8f56,#3d7a47);color:white;border:none;border-radius:14px;padding:15px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:100%;transition:all .2s;box-shadow:0 4px 16px rgba(61,122,71,.2);margin-top:4px;}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(61,122,71,.3);}
+.keys-reward{display:flex;align-items:center;gap:8px;background:var(--ybg);border:1px solid rgba(212,160,23,0.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;font-weight:700;color:var(--yellow);}
+/* EARN SECTION */
+.ebox{background:white;border:1.5px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;}
+.erow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);}
+.erow:last-child{border-bottom:none;}
+.eicon{font-size:16px;flex-shrink:0;}
+.etxt{font-size:13px;font-weight:600;color:var(--t2);flex:1;}
+.etxt.done{text-decoration:line-through;color:var(--t3);}
+.ekeys{font-size:13px;font-weight:800;color:var(--green);}
+.ekeys.done{color:var(--t3);}
+.ucta{background:linear-gradient(135deg,#4a8f56,#3d7a47);color:white;border:none;border-radius:16px;padding:16px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:100%;transition:all .2s;box-shadow:0 6px 20px rgba(61,122,71,.25);}
+.ucta:hover{transform:translateY(-2px);}
+/* DETAIL */
+#detail-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;}
+#detail-screen.open{display:block;animation:rise .3s ease;}
+.dnav{display:flex;align-items:center;gap:12px;padding:16px 20px;background:white;border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:10;}
+.bbtn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:var(--t2);transition:all .2s;flex-shrink:0;}
+.bbtn:hover{border-color:var(--green);color:var(--green);}
+.dhood{flex:1;font-size:12px;font-weight:700;color:var(--t3);text-align:center;letter-spacing:.06em;text-transform:uppercase;}
+.dsave{width:38px;height:38px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:var(--t3);transition:all .2s;}
+.dsave.saved{background:var(--obg);border-color:var(--oborder);color:var(--orange);}
+/* DETAIL PHOTO */
+.dhero-photo{width:100%;height:220px;object-fit:cover;display:block;}
+.dhero-photo-wrap{position:relative;height:220px;overflow:hidden;background:var(--bg);}
+.dhero-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(to top,rgba(30,24,18,0.7),transparent);}
+.dhero-vibe{display:inline-block;background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;letter-spacing:.06em;}
+.dbody{padding:20px 20px 40px;}
+.dtags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.dname{font-family:'Lora',serif;font-size:28px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:6px;}
+.dloc{font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;}
+.hr{height:1.5px;background:var(--border);margin:18px 0;}
+.dslbl{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:10px;}
+.dabout{font-size:15px;color:var(--t2);line-height:1.75;margin-bottom:6px;}
+.dsecret{background:linear-gradient(135deg,#eef5ef,#e6f2e8);border:1.5px solid var(--gborder);border-radius:16px;padding:16px;margin-bottom:18px;}
+.dseclbl{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px;}
+.dsectxt{font-family:'Lora',serif;font-size:15px;color:var(--text);line-height:1.75;font-style:italic;}
+.dstats{display:flex;justify-content:space-between;margin-bottom:18px;}
+.dstat{text-align:center;}
+.dstatv{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--green);display:block;}
+.dstatl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);}
+.dvbox{display:flex;align-items:center;gap:10px;background:var(--gbg);border:1.5px solid var(--gborder);border-radius:14px;padding:12px 14px;margin-bottom:18px;font-size:13px;font-weight:700;color:var(--green);}
+.dirbtn{background:linear-gradient(135deg,#4a8f56,#3d7a47);color:white;border:none;border-radius:14px;padding:15px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin-bottom:10px;transition:all .2s;box-shadow:0 4px 16px rgba(61,122,71,.2);}
+.dirbtn:hover{transform:translateY(-2px);}
+.obtn{background:white;color:var(--t2);border:1.5px solid var(--border2);border-radius:14px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:all .2s;}
+.obtn:hover{border-color:var(--green);color:var(--green);}
+/* PRICING */
+#pricing-screen{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;display:none;}
+#pricing-screen.open{display:block;animation:rise .35s ease;}
+.pw{padding:20px 20px 60px;}
+.pnav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.pcard{background:white;border:1.5px solid var(--border);border-radius:20px;padding:20px;margin-bottom:14px;position:relative;}
+.pcard.hi{border-color:var(--orange);border-width:2px;}
+.pcard.gi{border-color:var(--gborder);border-width:2px;}
+.hotb{position:absolute;top:-12px;right:16px;background:var(--orange);color:white;font-size:10px;font-weight:800;padding:4px 12px;border-radius:100px;}
+.ptop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.pname{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.pdesc{font-size:12px;color:var(--t3);font-weight:600;}
+.pprice{font-family:'Lora',serif;font-size:30px;font-weight:600;text-align:right;}
+.pprice.fp{color:var(--green);}.pprice.pp{color:var(--orange);}
+.pper{font-size:11px;color:var(--t3);font-weight:600;text-align:right;}
+.pfeats{display:flex;flex-direction:column;}
+.pfeat{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--t2);}
+.pfeat:last-child{border-bottom:none;}
+.fi{font-size:13px;flex-shrink:0;}
+.ptog{display:flex;background:var(--bg);border-radius:100px;padding:3px;margin-bottom:14px;}
+.pto{flex:1;text-align:center;padding:8px;border-radius:100px;font-size:12px;font-weight:800;color:var(--t2);cursor:pointer;transition:all .2s;position:relative;}
+.pto.on{background:var(--text);color:white;}
+.sb2{position:absolute;top:-9px;right:2px;background:var(--green);color:white;font-size:8px;font-weight:800;padding:2px 7px;border-radius:100px;}
+.buybtn{background:var(--orange);color:white;border:none;border-radius:14px;padding:15px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin-top:14px;transition:all .2s;}
+.buybtn:hover{transform:translateY(-2px);}
+.rl{display:block;text-align:center;padding:12px;font-size:13px;color:var(--t3);font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:none;width:100%;font-family:'Nunito',sans-serif;}
+.leg{font-size:10px;color:var(--t3);text-align:center;line-height:1.6;padding:0 10px;}
+/* CITY PICKER */
+#cp{position:fixed;inset:0;background:rgba(248,245,240,.97);z-index:400;display:none;flex-direction:column;backdrop-filter:blur(8px);}
+#cp.open{display:flex;}
+.cph{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1.5px solid var(--border);}
+.cpt{font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);}
+.cpc{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--t2);}
+.cpl{flex:1;overflow-y:auto;padding:8px 12px;}
+.cpi{display:flex;justify-content:space-between;align-items:center;padding:14px 10px;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;color:var(--t2);transition:all .15s;}
+.cpi:hover{background:var(--gbg);color:var(--green);}
+.cpi.on{color:var(--green);background:var(--gbg);}
+.cpm{text-align:center;padding:16px;font-size:12px;font-weight:700;color:var(--t3);border-top:1px solid var(--border);}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:white;border-radius:100px;padding:10px 20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.2);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<div id="splash"><div class="si">🌿</div><div class="sn">Gem</div><div class="st">Find what's hidden</div></div>
+<div id="toast"></div>
+<div id="app">
+
+<!-- HOME -->
+<div id="home-screen" class="screen on">
+<div class="hdr">
+<div class="htop"><div class="aname">Gem 💎</div><div class="vpill" id="vpill" onclick="toggleVegan()"><div class="vdot" id="vdot"></div><span id="vtxt">Vegan Filter</span></div></div>
+<div class="crow"><span class="clbl">Exploring</span><button class="cbtn" onclick="openCP()"><span id="cname">Newport Beach</span> ▾</button></div>
+
+</div>
+<div class="chips-wrap"><div class="chips">
+<button class="chip on" onclick="setFilter('All',this)">All</button>
+<button class="chip" onclick="setFilter('Restaurant',this)">Restaurant</button>
+<button class="chip" onclick="setFilter('Café',this)">Café</button>
+<button class="chip" onclick="setFilter('Bar',this)">Bar</button>
+<button class="chip" onclick="setFilter('Park',this)">Park</button>
+<button class="chip" onclick="setFilter('Gallery',this)">Gallery</button>
+<button class="chip" onclick="setFilter('Viewpoint',this)">Viewpoint</button>
+</div></div>
+<div id="vbanner" class="vbanner" style="display:none">🌱 Showing vegan-friendly spots only</div>
+
+<div class="sw"><div class="slbl" id="slbl">All Spots</div><div id="slist"></div></div>
+</div>
+
+<!-- MAP -->
+<div id="map-screen" class="screen">
+<div style="padding:0 0 12px;display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">Hidden spots near you</div><div style="font-family:'Lora',serif;font-size:22px;font-weight:600" id="mcity">Newport Beach</div></div>
+<button class="cbtn" onclick="openCP()">Change ▾</button>
+</div>
+<div id="mapbox-map" style="width:100%;height:340px;border-radius:20px;overflow:hidden;border:1.5px solid var(--border2);box-shadow:0 4px 20px rgba(0,0,0,.07);margin-bottom:16px;"></div>
+<div class="slbl" style="margin-bottom:10px">Tap a pin to explore</div>
+<div class="mcards" id="mcards"></div>
+</div>
+
+<!-- EVENTS -->
+<div id="events-screen" class="screen">
+<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Exclusive access</div><div style="font-family:'Lora',serif;font-size:28px;font-weight:600">Secret Events</div></div>
+<div style="background:var(--gbg);border:1.5px solid var(--gborder);border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:13px;font-weight:600;color:var(--green)">🎟 Spots host secret events here. Gem takes 15% of every ticket sold.</div>
+<div id="elist"></div>
+</div>
+
+<!-- SAVED -->
+<div id="saved-screen" class="screen">
+<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Your collection</div><div style="font-family:'Lora',serif;font-size:28px;font-weight:600">Saved Spots</div></div>
+<div id="savedlist"></div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile-screen" class="screen">
+<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Your account</div><div style="font-family:'Lora',serif;font-size:28px;font-weight:600">Profile</div></div>
+<div class="phero"><div class="pav">🌿</div><div><div class="pname">Local Explorer</div><div class="psince">Member since May 2026</div></div></div>
+<div class="sgrid">
+<div class="sbox"><span class="sval" id="psvd">0</span><div class="slabel">Saved</div></div>
+<div class="sbox"><span class="sval" id="pvis">2</span><div class="slabel">Visited</div></div>
+<div class="sbox"><span class="sval" id="pcity" style="font-size:13px;padding-top:4px">Newport</span><div class="slabel">City</div></div>
+</div>
+
+<!-- SUBMIT A SPOT -->
+<div class="submit-card">
+<div class="submit-header" onclick="toggleSubmitForm()">
+<div class="submit-header-icon">📍</div>
+<div><div class="submit-header-title">Submit a Hidden Spot</div><div class="submit-header-sub">Know somewhere secret? Share it with the community.</div></div>
+<div class="submit-header-arrow" id="submit-arrow">›</div>
+</div>
+<div class="submit-form" id="submit-form">
+<div class="keys-reward">🗝 Earn +2 keys for any spot · +3 keys for a vegan spot</div>
+<div class="form-group">
+<label class="form-label">Spot Name</label>
+<input class="form-input" type="text" id="sf-name" placeholder="What's it called?">
+</div>
+<div class="form-group">
+<label class="form-label">Category</label>
+<select class="form-select" id="sf-cat">
+<option value="">Choose a category...</option>
+<option>Restaurant</option><option>Café</option><option>Bar</option>
+<option>Park</option><option>Gallery</option><option>Viewpoint</option><option>Experience</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Neighborhood & City</label>
+<input class="form-input" type="text" id="sf-hood" placeholder="e.g. Silver Lake, Los Angeles">
+</div>
+<div class="form-group">
+<label class="form-label">What makes it special?</label>
+<textarea class="form-input" id="sf-about" rows="3" placeholder="Describe the vibe and why it's worth knowing about..."></textarea>
+</div>
+<div class="form-group">
+<label class="form-label">The Secret — How do people find it?</label>
+<textarea class="form-input" id="sf-secret" rows="3" placeholder="The exact directions, password, trick, or insider knowledge..."></textarea>
+</div>
+<div class="form-group">
+<label class="form-label">Add a Photo</label>
+<div class="photo-upload" onclick="toast('Photo upload coming soon!')">
+<div class="photo-upload-icon">📷</div>
+<div class="photo-upload-text">Tap to add a photo</div>
+<div class="photo-upload-sub">JPG or PNG · Max 10MB</div>
+</div>
+</div>
+<div class="form-group">
+<div class="vegan-check">
+<input type="checkbox" id="sf-vegan">
+<label class="vegan-check-label" for="sf-vegan">🌱 This is a vegan-friendly spot</label>
+</div>
+</div>
+<button class="submit-btn" onclick="submitSpot()">Submit Spot 📍</button>
+</div>
+</div>
+
+<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:12px">Your Access</div>
+<div class="ebox">
+<div class="erow"><span class="eicon">👁</span><span class="etxt">Spots visible in your city</span><span class="ekeys">3 spots</span></div>
+<div class="erow"><span class="eicon">🔒</span><span class="etxt">Secret directions</span><span class="ekeys" style="color:var(--t3)">Locked</span></div>
+<div class="erow"><span class="eicon">🌱</span><span class="etxt">Vegan filter</span><span class="ekeys">Free</span></div>
+<div class="erow"><span class="eicon">♡</span><span class="etxt">Save favorite spots</span><span class="ekeys">Free</span></div>
+<div class="erow"><span class="eicon">🗺</span><span class="etxt">All spots + secret directions</span><span class="ekeys" style="color:var(--orange)">Gem Pass</span></div>
+</div>
+<button class="ucta" onclick="openPricing()">Get Gem Pass — Unlock Everything 🗝️</button>
+</div>
+
+<nav id="nav">
+<button class="nb on" onclick="go('home',this)">
+  <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+  <span class="nb-label">Home</span>
+</button>
+<button class="nb" onclick="go('map',this)">
+  <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+  <span class="nb-label">Map</span>
+</button>
+<button class="nb" onclick="go('events',this)">
+  <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span class="nb-label">Events</span>
+</button>
+<button class="nb" onclick="go('saved',this)">
+  <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+  <span class="nb-label">Saved</span>
+</button>
+<button class="nb" onclick="go('profile',this)">
+  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  <span class="nb-label">Profile</span>
+</button>
+</nav>
+</div>
+
+<!-- DETAIL SCREEN -->
+<div id="detail-screen">
+<div class="dnav"><button class="bbtn" onclick="closeDetail()">←</button><div class="dhood" id="dhood"></div><button class="dsave" id="dsavebtn" onclick="detailSave()">♡</button></div>
+<div class="dhero-photo-wrap" id="dhero-wrap">
+<img id="dhero-img" class="dhero-photo" src="" alt="" onerror="this.style.display='none'">
+<div class="dhero-overlay"><span class="dhero-vibe" id="dhero-vibe"></span></div>
+</div>
+<div class="dbody">
+<div class="dtags" id="dtags"></div>
+<div class="dname" id="dname"></div>
+<div class="dloc" id="dloc"></div>
+<div class="hr"></div>
+<div class="dslbl">About this spot</div>
+<div class="dabout" id="dabout"></div>
+<div class="hr"></div>
+<div class="dslbl">🗝 The Secret — How to Find It</div>
+<div class="dsecret" id="d-secret-box" style="position:relative">
+  <div class="dseclbl">Insider directions</div>
+  <div class="dsectxt" id="dsec"></div>
+  <div id="d-lock-overlay" style="position:absolute;inset:0;background:rgba(238,245,239,0.85);border-radius:14px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;backdrop-filter:blur(2px)">
+    <span style="font-size:22px">🔒</span>
+    <span style="font-size:12px;font-weight:800;color:var(--green)">Gem Pass required</span>
+    <button onclick="openPricing()" style="background:var(--orange);color:white;border:none;border-radius:100px;padding:8px 18px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;margin-top:4px">Unlock for $6.99/mo</button>
+  </div>
+</div>
+<div class="dstats">
+<div class="dstat"><span class="dstatv" id="dsaves"></span><div class="dstatl">Saves</div></div>
+<div class="dstat"><span class="dstatv" style="color:var(--green)">Verified ✓</span><div class="dstatl">Status</div></div>
+<div class="dstat"><span class="dstatv" id="dtier"></span><div class="dstatl">Tier</div></div>
+</div>
+<div id="dvbox" class="dvbox" style="display:none">🌱 100% vegan-friendly — verified by the Mossy community</div>
+<button class="dirbtn" id="dirbtn">📍 Get Directions</button>
+<button class="obtn" id="dobbtn" onclick="detailSave()">Save This Spot</button>
+</div>
+</div>
+
+<!-- PRICING -->
+<div id="pricing-screen">
+<div class="pw">
+<div class="pnav"><button class="bbtn" onclick="closePricing()">←</button><div><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Unlock everything</div><div style="font-family:'Lora',serif;font-size:22px;font-weight:600">Gem Pass</div></div></div>
+<div class="pcard gi">
+<div class="ptop"><div><div class="pname">Free</div><div class="pdesc">Start discovering today</div></div><div><div class="pprice fp">$0</div><div class="pper">forever</div></div></div>
+<div class="pfeats"><div class="pfeat"><span class="fi">✅</span>3 spots per city — free forever</div><div class="pfeat"><span class="fi">✅</span>🌱 Vegan filter</div><div class="pfeat"><span class="fi">✅</span>Save your favorites</div><div class="pfeat"><span class="fi">✅</span>See spot names, photos & vibes</div><div class="pfeat"><span class="fi">❌</span>Secret directions locked</div></div>
+<div style="background:var(--gbg);border:1px solid var(--gborder);border-radius:10px;padding:10px;text-align:center;margin-top:12px;font-size:13px;font-weight:800;color:var(--green)">Your current plan ✓</div>
+</div>
+<div class="pcard hi">
+<div class="hotb">MOST POPULAR</div>
+<div style="text-align:center;font-size:40px;margin-bottom:8px">🌿</div>
+<div style="font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--orange);text-align:center;margin-bottom:4px">Gem Pass</div>
+<div style="font-size:12px;color:var(--t3);font-weight:700;text-align:center;margin-bottom:14px">Unlimited access. Every city.</div>
+<div class="ptog"><div class="pto on" id="mo" onclick="setPlan('monthly')">Monthly</div><div class="pto" id="yr" onclick="setPlan('yearly')">Yearly<span class="sb2">-40%</span></div></div>
+<div style="text-align:center;margin-bottom:14px"><span style="font-family:'Lora',serif;font-size:46px;font-weight:600;color:var(--orange)" id="pp">$4.99</span><span style="font-size:14px;color:var(--t3);font-weight:700" id="pper">/month</span></div>
+<div class="pfeats"><div class="pfeat"><span class="fi">✦</span>All spots in every city — unlimited</div><div class="pfeat"><span class="fi">✦</span>Full secret directions for every spot</div><div class="pfeat"><span class="fi">✦</span>🌱 Vegan filter across all cities</div><div class="pfeat"><span class="fi">✦</span>Secret events access & ticket booking</div><div class="pfeat"><span class="fi">✦</span>Submit your own hidden spots</div><div class="pfeat"><span class="fi">✦</span>No ads. Ever.</div></div>
+<button class="buybtn" onclick="window.open('https://artmadrid.gumroad.com/l/ggajk','_blank');S.subscribed=true;renderSpots();">Get Gem Pass</button>
+</div>
+<div class="pcard">
+<div class="ptop"><div><div class="pname">For Businesses</div><div class="pdesc">Feature your hidden gem</div></div><div><div class="pprice pp">$149</div><div class="pper">/month</div></div></div>
+<div class="pfeats"><div class="pfeat"><span class="fi">⭐</span>Featured placement</div><div class="pfeat"><span class="fi">🗺</span>Priority map pin</div><div class="pfeat"><span class="fi">🎟</span>Host events (15% fee)</div><div class="pfeat"><span class="fi">🌱</span>Vegan verified badge</div><div class="pfeat"><span class="fi">📊</span>Analytics dashboard</div></div>
+<button class="buybtn" style="background:var(--text)" onclick="toast('Business applications opening soon!')">Apply as a Business →</button>
+</div>
+<button class="rl" onclick="toast('No previous purchases found.')">Restore Purchases</button>
+<p class="leg">Cancel anytime. No hidden fees.</p>
+</div>
+</div>
+
+<!-- CITY PICKER -->
+<div id="cp">
+<div class="cph"><div class="cpt">Choose a City</div><button class="cpc" onclick="closeCP()">✕</button></div>
+<div class="cpl" id="cplist"></div>
+<div class="cpm">More cities coming soon 🌍</div>
+</div>
+
+<script>
+
+
+// Real Unsplash photos matched to each spot type
+const SPOTS=[
+  {id:1,name:"Skäl Pizza",emoji:"🍕",lat:33.6136,lng:-117.9267,cat:"Restaurant",hood:"Lido Village",city:"Newport Beach",about:"A waterfront wood-fired pizza spot tucked into Lido Marina Village that most people walk past without realizing how special it is. Founded by the chef behind Malibu Farm — vegetable-forward, minimal, and completely its own thing.",secret:"Sit outside on the harbor walk at golden hour — that's the move. Order the avocado pizza or the brown butter beet pasta. Ask for vegan options — they have several. Happy hour Mon, Thu & Fri 2–5pm. 3400 Via Oporto Suite 104, Newport Beach.",vibe:"Waterfront Gem",vegan:false,featured:true,saves:312,tier:1,photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80",px:52,py:48},
+  {id:2,name:"Moulin",emoji:"☕",lat:33.6178,lng:-117.8714,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A Parisian-style café that feels like it was transported directly from the 7th arrondissement. Fresh pastries made overnight, strong café au lait, and a tucked-away patio that's easy to linger on.",secret:"The patio in the back is where locals sit — walk through and ask for a table outside. Get there before 9am on weekends or the croissants are gone. Order the Croque Madame. 1000 Bristol St N, Newport Beach.",vibe:"Paris by the Sea",vegan:false,featured:false,saves:578,tier:1,photo:"https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80",px:38,py:35},
+  {id:3,name:"Lido Bottle Works",emoji:"🍷",lat:33.6134,lng:-117.927,cat:"Bar",hood:"Lido Marina Village",city:"Newport Beach",about:"A craft beer, wine and bottle shop owned by Newport Beach natives. Waterfront, locally sourced, with winemaker events, live music and an art gallery rotating through constantly.",secret:"Go on a Thursday evening for winemaker events that aren't advertised online. The cauliflower small plate is surprisingly the best thing on the menu. Sit at the bar and ask what's new on tap. 3408 Via Oporto, Newport Beach.",vibe:"Local Waterfront",vegan:false,featured:false,saves:734,tier:1,photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80",px:54,py:52},
+  {id:4,name:"Buddha's Favorite",emoji:"🍱",lat:33.6064,lng:-117.8969,cat:"Restaurant",hood:"Balboa Island",city:"Newport Beach",about:"A hidden sushi gem that locals fiercely protect. Dishes made with the freshest ingredients using family recipes straight from Japan. Tourists walk right past it.",secret:"Pair any roll with their premium sake — ask for the Suehiro Gensai, which comes in a specialty wood box. No reservations — get there right at opening. Cash preferred. Ask what came in fresh that day.",vibe:"Local Secret",vegan:false,featured:false,saves:891,tier:1,photo:"https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&q=80",px:62,py:42},
+  {id:5,name:"The Crab Cooker",emoji:"🦞",lat:33.6089,lng:-117.9287,cat:"Restaurant",hood:"Balboa Peninsula",city:"Newport Beach",about:"Since 1951 this no-frills seafood shack has been serving perfectly wood-smoked fish and a famous red clam chowder. A rite of passage for anyone who actually knows Newport.",secret:"Go right when it opens — the line builds fast. Order the clam chowder and whatever fish they smoked that morning. Cash only. No reservations ever. 2200 Newport Blvd, Newport Beach.",vibe:"Local Legend",vegan:false,featured:false,saves:1203,tier:1,photo:"https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600&q=80",px:40,py:65},
+  {id:6,name:"Sugar Shack Cafe",emoji:"🏄",lat:33.6553,lng:-117.9992,cat:"Café",hood:"Downtown HB",city:"Huntington Beach",about:"An HB institution since 1967. Covered in surfing memorabilia, generous portions, classic American breakfast. The kind of place locals have been going to their whole lives.",secret:"The back patio has almost no wait even when the front is packed — ask to sit there. Get the breakfast burrito. Go on a weekday morning before the surf crowd hits. 213½ Main St, Huntington Beach.",vibe:"Surf Institution",vegan:false,featured:true,saves:1456,tier:1,photo:"https://images.unsplash.com/photo-1525610553991-2bede1a236e2?w=600&q=80",px:35,py:40},
+  {id:7,name:"Capone's",emoji:"🍸",lat:33.7073,lng:-117.9953,cat:"Bar",hood:"Beach Blvd",city:"Huntington Beach",about:"A hidden gem with a cool classic vibe that most people drive right past on Beach Blvd. The cocktails are some of the best in HB and the $12 lunch specials are unbeatable.",secret:"Ask for Jose at the bar — he's been there forever and will make you something not on the menu. Go for happy hour on weekdays. The $12 lunch specials are fresh and huge. 19688 Beach Blvd, Huntington Beach.",vibe:"Classic Dive",vegan:false,featured:false,saves:423,tier:1,photo:"https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&q=80",px:22,py:55},
+  {id:8,name:"Beach City Provisions",emoji:"🌊",lat:33.7236,lng:-118.0428,cat:"Café",hood:"Bolsa Chica",city:"Huntington Beach",about:"Tucked inside the Bolsa Chica campground — part breakfast café, part beer garden. The kind of place you stumble upon and immediately text your friends about.",secret:"Most people don't know it's inside the campground — drive past the entrance and follow the signs to the café. The breakfast burritos are legendary with local surfers. Show up sandy and shoeless, they don't care. 3901 Warner Ave, Huntington Beach.",vibe:"Local Secret",vegan:false,featured:false,saves:567,tier:1,photo:"https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&q=80",px:18,py:30},
+  {id:9,name:"HQ Gastropub",emoji:"🍔",lat:33.6553,lng:-117.9994,cat:"Restaurant",hood:"Downtown HB",city:"Huntington Beach",about:"A consistently great local gastropub that HB locals have been celebrating birthdays and anniversaries at for years. Not flashy — just really good food and a genuine neighborhood feel.",secret:"The happy hour is one of the best deals in HB — go weekdays 3–6pm. Sit at the bar for faster service and better conversation. Ask your server what's new — the menu rotates. 300 Pacific Coast Hwy, Huntington Beach.",vibe:"Neighborhood Staple",vegan:false,featured:false,saves:789,tier:1,photo:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",px:42,py:68},
+  {id:10,name:"Silver Trumpet",emoji:"🎷",lat:33.6896,lng:-117.8878,cat:"Restaurant",hood:"South Coast Plaza",city:"Costa Mesa",about:"A hidden oasis near Segerstrom Center with a AAA Three-Diamond rating that most people have never heard of. Locals call it one of the best kept secrets in OC.",secret:"Go for dinner before a show at Segerstrom — they know the schedule and will time your meal perfectly. The Bacon Wrapped Dates are the move. Ask for a table near the back — quieter and more intimate. 3350 Avenue of the Arts, Costa Mesa.",vibe:"Hidden Oasis",vegan:false,featured:false,saves:334,tier:1,photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",px:55,py:38},
+  {id:11,name:"Haven Craft Kitchen",emoji:"🍹",lat:33.7879,lng:-117.8531,cat:"Bar",hood:"Old Towne Orange",city:"Costa Mesa",about:"A craft cocktail bar in historic Old Towne Orange with one of the best Old Fashioneds in all of Orange County. Known among bartenders and serious cocktail people.",secret:"Ask for the seasonal cocktail that's not on the menu — there's always one. The mezcal margarita is the move. Go on a Tuesday or Wednesday when it's quieter and the bartenders have more time for you. 190 S Glassell St, Orange.",vibe:"Craft Cocktail",vegan:false,featured:false,saves:445,tier:2,photo:"https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80",px:70,py:25},
+  {id:12,name:"Zinc Café & Market",emoji:"🌿",lat:33.6134,lng:-117.927,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A vegetarian café tucked into Corona del Mar that locals have been coming to for decades. Farm-to-table before it was cool, cash-only, and completely unpretentious.",secret:"The back garden patio is one of the most peaceful spots in Newport — ask to sit outside. Everything is vegetarian. The veggie scramble and the market salads are the move. Get there early on weekends. 3434 Via Lido, Newport Beach.",vibe:"Garden Gem",vegan:true,featured:false,saves:623,tier:1,photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80",px:45,py:28},
+,
+  {id:16,name:"Truly Pizza",emoji:"🍕",cat:"Restaurant",hood:"North Laguna",city:"Laguna Beach",about:"One of the top 50 pizzas in the entire United States — ranked alongside only 3 other California pizzerias. An open-air coastal hideaway on PCH that channels Amalfi-meets-California energy. Just opened.",secret:"Next to Urth Caffé on North Coast Hwy. The micro-blistered crust from a 3-day fermentation process is the signature — ask about it. Try the frozen white wine lemonade slurpee — locals call it the best drink in Laguna. Make a reservation, walk-in wait can be an hour. 320 N Coast Hwy, Laguna Beach.",vibe:"Top 50 USA",vegan:false,featured:true,saves:89,tier:1,photo:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80",lat:33.5558,lng:-117.7826,px:55,py:72},
+
+  {id:17,name:"Marine Room Tavern",emoji:"🎸",cat:"Bar",hood:"Downtown Laguna",city:"Laguna Beach",about:"A historic speakeasy-vibe bar established in the 1930s. Live bands, vintage photo booth, crackling fireplace, and an extensive whiskey selection. One of the most characterful bars in all of OC.",secret:"Go on a weekend night when Radio Royalty or another local band plays — it gets so packed they turn people away. Ask the bartender about the Pīnō or Popo — their signature drinks. 214 Ocean Ave, Laguna Beach.",vibe:"Historic Dive",vegan:false,featured:false,saves:1102,tier:1,photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80",lat:33.5427,lng:-117.7854,px:40,py:55},
+  {id:18,name:"Ahba",emoji:"🫒",cat:"Restaurant",hood:"South Laguna",city:"Laguna Beach",about:"A house party disguised as a restaurant inside an old beachside cottage. Mediterranean small plates, natural wine, and the kind of intimate energy you can't manufacture.",secret:"No sign out front — look for the cottage with the warm light on PCH. Walk in like you own it. The octopus and pasta are the move. Natural wine list changes constantly — ask what arrived this week. Reservations essential. 1555 S Coast Hwy, Laguna Beach.",vibe:"House Party",vegan:false,featured:true,saves:678,tier:1,photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",lat:33.5198,lng:-117.7712,px:55,py:65},
+  {id:19,name:"Penguin Cafe",emoji:"🐧",cat:"Restaurant",hood:"Downtown Laguna",city:"Laguna Beach",about:"Been open over 40 years. Just a diner counter and a few booths. Classic American breakfast — corned beef hash, french toast, patty melt with onion rings. Locals have been coming their whole lives.",secret:"Only open until 1:30pm — don't show up late. Get the corned beef hash or the patty melt. It fills up fast on weekends so go early or go weekday. Cash preferred. 981 S Coast Hwy, Laguna Beach.",vibe:"40-Year Institution",vegan:false,featured:false,saves:834,tier:1,photo:"https://images.unsplash.com/photo-1525610553991-2bede1a236e2?w=600&q=80",lat:33.5312,lng:-117.7778,px:45,py:48},
+  {id:20,name:"Oliver's Osteria",emoji:"🍝",cat:"Restaurant",hood:"Laguna Hills",city:"Laguna Beach",about:"Tucked in the hills above the beach, away from the tourist strip. Italian men who will sell you on beef carpaccio and housemade tagliatelle bolognese like they're selling sports cars.",secret:"Drive up from PCH into the residential hills — most people never make it up here. The tagliatelle bolognese is non-negotiable. Ask for a table on the patio. Reservations strongly recommended. 23772 Moulton Pkwy, Laguna Hills.",vibe:"Hidden Italian",vegan:false,featured:false,saves:567,tier:1,photo:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",lat:33.5966,lng:-117.7056,px:72,py:28},
+  {id:21,name:"Lost Pier Cafe",emoji:"🌊",cat:"Café",hood:"Aliso Beach",city:"Laguna Beach",about:"Literally on the sand at Aliso State Beach. Most people mistake it for a lifeguard station and walk right past. Fresh fish tacos, clam chowder fries, fire pit reservations at sunset.",secret:"Park in the Aliso Beach lot and walk south — the café is at the far end where almost nobody goes. The fish tacos are catch of the day. Book a fire pit for sunset — they go fast. Only open until 5pm in winter, 6pm in summer. 31131 S Coast Hwy, Laguna Beach.",vibe:"Beach Secret",vegan:false,featured:false,saves:923,tier:1,photo:"https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600&q=80",lat:33.5052,lng:-117.7634,px:35,py:75},
+  {id:22,name:"Rye Goods",emoji:"🍞",cat:"Café",hood:"Lumberyard Mall",city:"Laguna Beach",about:"Inside the Lumberyard Mall which looks like a Disney village. Heirloom sourdough, farmers market toasts, and natural wine by the glass in the evening. A whole different vibe from the rest of Laguna.",secret:"Go in the evening when it turns into a wine bar — most people only know it as a morning café. The heirloom sourdough loaf to go is the move. The back corner table is the best seat in the house. 384 Forest Ave, Laguna Beach.",vibe:"Hidden Wine Bar",vegan:true,featured:false,saves:445,tier:1,photo:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80",lat:33.5421,lng:-117.7847,px:42,py:42},
+  {id:23,name:"Heisler Park Sunset Bench",emoji:"🌅",cat:"Viewpoint",hood:"North Laguna",city:"Laguna Beach",about:"Locals' secret sunset spot. Stairways lead down to tide pools almost nobody else finds. The best bench in the park faces southwest and is almost always empty even when the park is busy.",secret:"Enter the park at the north end off Cliff Dr. Walk past the main lawn toward the bluff edge. Take the third stairway down to the rocky shore at low tide — best tide pools in Laguna. The bench at the very north tip of the bluff has the best sunset angle in all of OC.",vibe:"Secret Viewpoint",vegan:true,featured:false,saves:334,tier:1,photo:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80",lat:33.5502,lng:-117.7918,px:28,py:35},
+,
+  {id:24,name:"Kumquat Coffee",cat:"Café",hood:"Silver Lake",city:"Los Angeles",about:"A tiny plant-based café hidden behind a flower shop on Sunset Blvd. Just 20 cups a day, hand-poured with complete care. One of the most closely guarded secrets in Silver Lake.",secret:"Walk through Bloom Florals on Sunset Blvd — the café is in the back courtyard through the blue gate. Arrive before 9am on weekends or the cups are gone. Order whatever the barista recommends that day. Cash only.",vibe:"Hidden Courtyard",vegan:true,featured:true,saves:1203,tier:1,emoji:"☕",photo:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80",lat:34.0839,lng:-118.2707,px:38,py:22},
+  {id:25,name:"Maccheroni Republic",cat:"Restaurant",hood:"Downtown LA",city:"Los Angeles",about:"Hidden in downtown LA's busiest streets, a testament to pasta perfection. Locals and visitors develop cravings that haunt them for months. The lasagna di carne is the stuff of legend.",secret:"Look for the unmarked entrance on Broadway — it's between two louder spots and easy to walk past. The back patio has string lights and is the best seat in the house. Go on a weeknight to actually get a table. 332 S Broadway, Los Angeles.",vibe:"Pasta Perfection",vegan:false,featured:false,saves:876,tier:1,emoji:"🍝",photo:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80",lat:34.0448,lng:-118.2509,px:55,py:58},
+  {id:26,name:"Maciel's Plant-Based Butcher",cat:"Restaurant",hood:"Highland Park",city:"Los Angeles",about:"A women-owned, Latinx-owned plant-based deli blending Mexican ingredients with chickpeas, beans and beets to make the best vegan pastrami, chorizo and chicharrones in LA. Named one of Eater LA's Essential Restaurants.",secret:"The Reuben and The Smokey are the move — both better than most deli sandwiches with actual meat. Go early for the breakfast burritos. They sell meats and cheeses by the pound from the deli case — perfect for a vegan charcuterie situation. 5933 York Blvd, Highland Park.",vibe:"Latinx Gem",vegan:true,featured:true,saves:654,tier:1,emoji:"🥪",photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80",lat:34.1136,lng:-118.2019,px:72,py:18},
+  {id:27,name:"Groundwork Coffee",cat:"Café",hood:"Arts District",city:"Los Angeles",about:"Inside the restored North Hollywood Historic Train Depot — a registered State Historic Landmark built in the 1890s. One of LA's best organic coffee spots and almost nobody knows about the depot location.",secret:"The North Hollywood location inside the old train depot is the one — 11275 Chandler Blvd. Built in the early 1890s, abandoned for years, now one of the most atmospheric coffee shops in LA. Go early, grab a Honeybee Latte and sit outside on the platform.",vibe:"Historic Landmark",vegan:true,featured:false,saves:445,tier:1,emoji:"🚂",photo:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80",lat:34.1706,lng:-118.3803,px:25,py:12},
+  {id:28,name:"Mr. Charlie's",cat:"Restaurant",hood:"Melrose",city:"Los Angeles",about:"The vegan McDonald's. Bright red and yellow storefront on La Brea that went viral on TikTok and never slowed down. Every single item on the menu is plant-based. Even non-vegans can't tell the difference.",secret:"Go on a Monday — they sell the Not A Hamburger for 99 cents, limit 2 per person. The Frowny Meal is the move — burger, nuggets, fries and a drink. Closed Sundays. Get there before the lunch rush or you will wait. 612 N La Brea Ave, Los Angeles.",vibe:"Vegan Fast Food",vegan:true,featured:false,saves:2341,tier:1,emoji:"🍔",photo:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80",lat:34.0766,lng:-118.3447,px:18,py:42}
+];
+
+const EVENTS=[
+  {id:1,spot:"Lido Bottle Works",emoji:"🍷",title:"Sunday Supper Tasting Menu",desc:"Every Sunday the kitchen creates a brand new tasting menu — whatever was at the farmers market that week. Select wine bottles are 50% off all night.",date:"Every Sunday",time:"5pm",price:65,left:12,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
+  {id:2,spot:"Lido Bottle Works",emoji:"🎵",title:"Live Music on the Lido Deck",desc:"Local musicians play waterside every Thursday, Saturday and Sunday. Free to attend, just grab a drink and a seat on the deck before it fills up.",date:"Thu, Sat & Sun",time:"Noon–3pm",price:0,left:40,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80"},
+  {id:3,spot:"Marine Room Tavern",emoji:"🎸",title:"Live Music Every Night",desc:"Orange County's second oldest bar has live music seven nights a week. Pool table, 200+ whiskeys, and a crowd that's been coming here since 1934.",date:"Every night",time:"9pm",price:0,left:99,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1501612780327-45045538702b?w=600&q=80"},
+  {id:4,spot:"Skäl Pizza",emoji:"🍕",title:"Happy Hour at the Harbor",desc:"Full Skäl menu at happy hour prices harborside. Avocado pizza, brown butter pasta, natural wine. One of the best kept secrets in Lido Village.",date:"Mon, Thu & Fri",time:"2pm–5pm",price:0,left:30,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80"},
+  {id:5,spot:"Truly Pizza",emoji:"🍕",title:"Grand Opening — Laguna Beach",desc:"Truly Pizza just opened on PCH in North Laguna. One of the top 50 pizzas in the USA. The frozen white wine lemonade slurpee is already legendary.",date:"May 7",time:"11am",price:0,left:99,vegan:false,tag:"Just Opened",photo:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80"},
+  {id:6,spot:"Silver Trumpet",emoji:"🎷",title:"Pre-Show Dinner Package",desc:"Three course dinner timed perfectly before a Segerstrom Center show. The kitchen knows the curtain time and gets you out. Not listed on their website.",date:"Show nights",time:"5:30pm",price:65,left:8,vegan:false,tag:"Almost Gone",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
+];
+
+const S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
+
+
+// ════════════════════
+// SUPABASE CONNECTION
+// ════════════════════
+const SUPABASE_URL = 'https://xozehljexzqoyvrxyklf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_trPsJ6bYk9B5gZHoktcYLA_YnYCJif9';
+
+async function supabaseFetch(endpoint, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation',
+    },
+    ...options,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// Load spots from database for a city
+async function loadSpotsFromDB(city) {
+  try {
+    const data = await supabaseFetch(`spots?city=eq.${encodeURIComponent(city)}&order=is_featured.desc,saves_count.desc`);
+    return data;
+  } catch (e) {
+    console.error('Error loading spots:', e);
+    return [];
+  }
+}
+
+// Save a submitted spot to database
+async function saveSpotToDB(spot) {
+  try {
+    await supabaseFetch('spots', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify(spot),
+    });
+    return true;
+  } catch (e) {
+    console.error('Error saving spot:', e);
+    return false;
+  }
+}
+
+// Load spots and merge with hardcoded ones
+async function loadAndRenderSpots() {
+  const city = S.city;
+  showLoadingState();
+  // Always include hardcoded spots that match this city
+  const hardcoded = SPOTS.filter(s => s.city.toLowerCase() === city.toLowerCase());
+  try {
+    const dbSpots = await loadSpotsFromDB(city);
+    const mapped = dbSpots.map((s, i) => ({
+      id: 1000 + i,
+      name: s.name,
+      cat: s.category,
+      hood: s.neighborhood,
+      city: s.city,
+      about: s.about,
+      secret: s.secret,
+      vibe: s.vibe || 'Hidden Gem',
+      vegan: s.is_vegan,
+      featured: s.is_featured,
+      saves: s.saves_count || 0,
+      tier: 1,
+      photo: s.photo_url || getDefaultPhoto(s.category),
+      px: Math.floor(Math.random() * 70) + 15,
+      py: Math.floor(Math.random() * 60) + 15,
+    }));
+    S.dbSpots = [...hardcoded, ...mapped];
+  } catch(e) {
+    S.dbSpots = hardcoded;
+  }
+  hideLoadingState();
+  renderSpots();
+}
+
+function getDefaultPhoto(cat) {
+  const photos = {
+    'Restaurant': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
+    'Café': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80',
+    'Bar': 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&q=80',
+    'Park': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&q=80',
+    'Gallery': 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&q=80',
+    'Viewpoint': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80',
+  };
+  return photos[cat] || photos['Restaurant'];
+}
+
+function showLoadingState() {
+  document.getElementById('slist').innerHTML = `
+    <div style="text-align:center;padding:60px 20px">
+      <div style="font-size:36px;margin-bottom:12px;animation:br 1.5s ease-in-out infinite">🌿</div>
+      <div style="font-family:'Lora',serif;font-size:18px;color:var(--t2);margin-bottom:6px">Finding hidden spots...</div>
+      <div style="font-size:13px;color:var(--t3)">Loading ${S.city}</div>
+    </div>`;
+}
+
+function hideLoadingState() {}
+
+
+window.onload=()=>{
+  setTimeout(()=>{
+    const sp=document.getElementById('splash');
+    sp.style.opacity='0';
+    setTimeout(()=>{
+      sp.style.display='none';
+      document.getElementById('app').classList.add('show');
+      S.filter='All';renderSpots();renderEvents();renderMap();renderCityList('');
+    },500);
+  },1900);
+};
+
+function go(tab,btn){
+  closeDetail();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(tab+'-screen').classList.add('on');
+  btn.classList.add('on');
+  if(tab==='map')renderMap();
+  if(tab==='saved')renderSaved();
+  if(tab==='profile')upProfile();
+}
+
+function toggleVegan(){
+  S.vegan=!S.vegan;
+  document.getElementById('vpill').classList.toggle('on',S.vegan);
+  document.getElementById('vbanner').style.display=S.vegan?'flex':'none';
+  document.getElementById('vtxt').textContent=S.vegan?'Vegan On':'Vegan Filter';
+  renderSpots();
+}
+
+function setFilter(f,btn){
+  S.filter=f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  renderSpots();
+}
+
+function filtered(city, filter, vegan){
+  city = city || S.city;
+  filter = filter || S.filter;
+  vegan = (vegan !== undefined) ? vegan : S.vegan;
+  return SPOTS.filter(s=>
+    s.city.toLowerCase()===city.toLowerCase()
+    && (filter==='All'||s.cat===filter)
+    && (vegan?s.vegan:true)
+  );
+}
+
+function catClass(c){return{Restaurant:'cres',Café:'ccaf',Bar:'cbar',Park:'cpar',Gallery:'cgal',Viewpoint:'cvp'}[c]||'cres';}
+
+function renderSpots(){
+  const spots = filtered();
+  const FREE_LIMIT = 3;
+  const subscribed = S.subscribed || false;
+  const visibleSpots = subscribed ? spots : spots.slice(0, FREE_LIMIT);
+  const hiddenCount = subscribed ? 0 : Math.max(0, spots.length - FREE_LIMIT);
+  const lbl = S.vegan ? '🌱 Vegan Spots' : S.filter === 'All' ? 'All Spots' : S.filter + 's';
+  const slbl = document.getElementById('slbl');
+  if(slbl) slbl.textContent = lbl + ' — ' + spots.length + ' spots';
+  if(!spots.length){
+    document.getElementById('slist').innerHTML = '<div class="empty"><div class="empty-emoji">🔍</div><div class="empty-title">No spots found</div><div class="empty-sub">Try a different filter or city</div></div>';
+    return;
+  }
+  let html = visibleSpots.map((s,i) => {
+    const saved = S.saved.has(s.id);
+    return '<div class="sc" style="animation-delay:'+(i*.06)+'s;cursor:pointer" onclick="openDetail('+s.id+')">'
+      +'<div style="position:relative;overflow:hidden;height:160px;background:var(--bg)">'
+      +'<img style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none" src="'+s.photo+'" loading="lazy" onerror="this.style.display='none'">'
+      +'<div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(30,24,18,0.55));pointer-events:none"></div>'
+      +(s.featured?'<span style="position:absolute;top:10px;left:10px;background:var(--yellow);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;pointer-events:none">⭐ Featured</span>':'')
+      +(s.vegan?'<span style="position:absolute;top:10px;right:10px;background:var(--green);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;pointer-events:none">🌱 Vegan</span>':'')
+      +'</div>'
+      +'<div class="sbody">'
+      +'<div class="smeta"><span class="scat '+catClass(s.cat)+'">'+s.cat+'</span><span class="shood">'+s.hood+'</span></div>'
+      +'<div class="sname">'+s.name+'</div>'
+      +'<div class="sdesc">'+s.about+'</div>'
+      +'<div class="sfooter">'
+      +'<span class="ssaves">♡ '+s.saves.toLocaleString()+' saves</span>'
+      +'<button class="svbtn'+(saved?' saved':'')+'" onclick="event.stopPropagation();toggleSave('+s.id+')">'+(saved?'♥':'♡')+'</button>'
+      +'</div></div></div>';
+  }).join('');
+  if(hiddenCount > 0){
+    html += `<div style="background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;">
+      <div style="font-size:32px;margin-bottom:10px">🔒</div>
+      <div style="font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px">${hiddenCount} more spots hidden</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Get Gem Pass to unlock all spots and secret directions.</div>
+      <button onclick="openPricing()" style="background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Get Gem Pass — $6.99/mo</button>
+    </div>`;
+  }
+  document.getElementById('slist').innerHTML = html;
+}
+
+function toggleSave(id){
+  if(S.saved.has(id)){S.saved.delete(id);toast('Removed from saved');}
+  else{S.saved.add(id);toast('Saved! ♥');}
+  renderSpots();renderSaved();upProfile();
+  if(S.detail===id)upDetailSave();
+}
+
+function openDetail(id){
+  const s=SPOTS.find(x=>x.id==id);if(!s){console.log("Spot not found:",id);return;}
+  S.detail=id;
+  document.getElementById('dhood').textContent=s.hood;
+  const img=document.getElementById('dhero-img');
+  img.src=s.photo;img.alt=s.name;img.style.display='block';
+  document.getElementById('dhero-wrap').style.background=s.vegan?'linear-gradient(135deg,#eef5ef,#d8eedd)':'linear-gradient(135deg,#fef2eb,#fde4d0)';
+  document.getElementById('dhero-vibe').textContent=s.vibe;
+  document.getElementById('dtags').innerHTML=`<span class="scat ${catClass(s.cat)}">${s.cat}</span>${s.vegan?'<span class="scat" style="background:var(--gbg);color:var(--green)">🌱 Vegan</span>':''}`;
+  document.getElementById('dname').textContent=s.name;
+  document.getElementById('dloc').textContent=s.hood+' · '+s.city;
+  document.getElementById('dabout').textContent=s.about;
+  const isSubbed = S.subscribed || false;
+  if(isSubbed) {
+    document.getElementById('dsec').textContent=s.secret;
+    document.getElementById('d-secret-box').style.filter='none';
+    document.getElementById('d-lock-overlay').style.display='none';
+  } else {
+    document.getElementById('dsec').textContent=s.secret;
+    document.getElementById('d-secret-box').style.filter='blur(5px)';
+    document.getElementById('d-lock-overlay').style.display='flex';
+  }
+  document.getElementById('dsaves').textContent=s.saves.toLocaleString();
+  document.getElementById('dtier').textContent='Tier '+s.tier;
+  document.getElementById('dvbox').style.display=s.vegan?'flex':'none';
+  // Wire up directions button
+  const dirBtn = document.getElementById('dirbtn');
+  if(dirBtn){
+    dirBtn.onclick = function(){
+      if(s.lat && s.lng){
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const url = isIOS
+          ? 'maps://?daddr='+s.lat+','+s.lng+'&dirflg=d'
+          : 'https://www.google.com/maps/dir/?api=1&destination='+s.lat+','+s.lng;
+        window.open(url, '_blank');
+      } else {
+        toast('Address: '+s.secret.split('.').pop().trim());
+      }
+    };
+  }
+  upDetailSave();
+  document.getElementById('detail-screen').classList.add('open');
+  window.scrollTo(0,0);
+}
+
+function upDetailSave(){
+  const sv=S.saved.has(S.detail);
+  const b=document.getElementById('dsavebtn');
+  b.textContent=sv?'♥':'♡';b.className='dsave'+(sv?' saved':'');
+  const ob=document.getElementById('dobbtn');
+  if(ob)ob.textContent=sv?'Remove from Saved':'Save This Spot';
+}
+function detailSave(){toggleSave(S.detail);}
+function closeDetail(){document.getElementById('detail-screen').classList.remove('open');S.detail=null;}
+
+function renderEvents(){
+  document.getElementById('elist').innerHTML=EVENTS.map(ev=>`
+    <div class="ecard" onclick="toast('Ticket booking coming soon!')">
+      <img class="ecard-img" src="${ev.photo}" alt="${ev.title}" loading="lazy" onerror="this.style.display='none'">
+      <div class="ecard-body">
+        <div class="etop">
+          <div><div class="espot">${ev.spot}${ev.vegan?' · 🌱':''}</div><div class="etitle">${ev.title}</div></div>
+          <div class="epbox"><div class="eprice ${ev.price>0?'paid':''}">${ev.price===0?'Free':'$'+ev.price}</div><div class="eplbl">per person</div></div>
+        </div>
+        <div class="edesc">${ev.desc}</div>
+        <div class="ebot"><div><div class="edate">${ev.date} · ${ev.time}</div><div class="eleft">${ev.left} spots left</div></div><span class="ebadge ${ev.price===0?'free':''}">${ev.tag}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderSaved(){
+  const sv=SPOTS.filter(s=>S.saved.has(s.id));
+  const el=document.getElementById('savedlist');
+  if(!sv.length){el.innerHTML='<div class="empty"><div class="empty-emoji">🌿</div><div class="empty-title">Nothing saved yet</div><div class="empty-sub">Tap ♡ on any spot to save it</div></div>';return;}
+  el.innerHTML=sv.map(s=>`
+    <div class="sc" onclick="openDetail(${s.id})">
+      <div class="sphoto-wrap" style="height:110px">
+        <img class="sphoto-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef5ef,#d8eedd)';this.style.display='none'">
+        <div class="sphoto-overlay"></div>
+        <div class="sphoto-badges">${s.featured?'<span class="frib">⭐ Featured</span>':'<span></span>'}${s.vegan?'<span class="vrib">🌱 Vegan</span>':''}</div>
+      </div>
+      <div class="sbody">
+        <div class="smeta"><span class="scat ${catClass(s.cat)}">${s.cat}</span><span class="shood">${s.hood}</span></div>
+        <div class="sname">${s.name}</div>
+        <div class="sfooter"><span class="ssaves">♡ ${s.saves.toLocaleString()}</span><button class="svbtn saved" onclick="event.stopPropagation();toggleSave(${s.id})">♥</button></div>
+      </div>
+    </div>`).join('');
+}
+
+function upProfile(){document.getElementById('psvd').textContent=S.saved.size;document.getElementById('pcity').textContent=S.city.slice(0,2).toUpperCase();}
+
+function renderMap(){
+  document.getElementById('mcity').textContent=S.city;
+  document.getElementById('mcnt').textContent=SPOTS.length+' spots';
+  document.getElementById('mpins').innerHTML=SPOTS.map((s,i)=>{
+    const c=s.vegan?'#3d7a47':'#e07b3a';
+    return`<div class="mpin" style="left:${s.px||50}%;top:${s.py||50}%;z-index:${12-i}" onclick="openDetail(${s.id})"><div class="mbub" style="background:${c}">${s.vegan?'🌱':'📍'}</div><div class="mtail" style="border-top:8px solid ${c}"></div></div>`;
+  }).join('');
+  document.getElementById('mcards').innerHTML=SPOTS.slice(0,6).map(s=>`
+    <div class="mcard" onclick="openDetail(${s.id})">
+      <img class="mcard-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.style.background='#eef5ef';this.style.display='none'">
+      <div class="mcard-body"><div class="mc-name">${s.name}</div><div class="mc-hood">${s.hood}</div></div>
+    </div>`).join('');
+}
+
+// Add px/py to spots for map
+const MAP_POS=[[52,48],[38,35],[54,52],[62,42],[40,65],[35,40],[22,55],[18,30],[42,68],[55,38],[70,25],[45,28]];
+SPOTS.forEach((s,i)=>{s.px=MAP_POS[i][0];s.py=MAP_POS[i][1];});
+
+const PRESET_CITIES = [
+  {name:"Newport Beach",emoji:"🏄"},
+  {name:"Huntington Beach",emoji:"🌊"},
+  {name:"Laguna Beach",emoji:"🌅"},
+  {name:"Costa Mesa",emoji:"🎷"},
+  {name:"Los Angeles",emoji:"🌴"},
+];
+
+function renderCityList(){
+  const el=document.getElementById('cplist');
+  if(!el) return;
+  const cities=[
+    {name:"Newport Beach",emoji:"🏄"},
+    {name:"Huntington Beach",emoji:"🌊"},
+    {name:"Laguna Beach",emoji:"🌅"},
+    {name:"Costa Mesa",emoji:"🎷"},
+    {name:"Los Angeles",emoji:"🌴"},
+  ];
+  el.innerHTML = cities.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:700;color:${c.name===S.city?'var(--green)':'var(--t2)'};background:${c.name===S.city?'var(--gbg)':'transparent'};margin:2px 8px;transition:all .15s;"
+    onclick="pickCity('${c.name}')"
+    onmouseover="this.style.background='var(--gbg)'"
+    onmouseout="this.style.background='${c.name===S.city?'var(--gbg)':'transparent'}'">
+      <span>${c.emoji} ${c.name}</span>
+      <span style="font-size:14px">${c.name===S.city?'✓':'›'}</span>
+    </div>`).join('');
+}
+function filterCities(){renderCityList();}
+function pickCity(c){
+  S.city=c;
+  S.filter='All';
+  try{
+    document.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('on'));
+    const fc=document.querySelectorAll('.chip')[0];
+    if(fc)fc.classList.add('on');
+  }catch(e){}
+  document.getElementById('cname').textContent=c;
+  if(document.getElementById('mcity'))document.getElementById('mcity').textContent=c;
+  if(document.getElementById('pcity'))document.getElementById('pcity').textContent=c.split(' ')[0];
+  document.getElementById('cp').classList.remove('open');
+  toast('Now exploring '+c+' 🌿');
+  renderSpotsForCity(c);
+}
+function openCP(){document.getElementById('cp').classList.add('open');renderCityList();}
+function closeCP(){document.getElementById('cp').classList.remove('open');}
+function openPricing(){document.getElementById('pricing-screen').classList.add('open');}
+function closePricing(){document.getElementById('pricing-screen').classList.remove('open');}
+function setPlan(p){S.plan=p;document.getElementById('mo').classList.toggle('on',p==='monthly');document.getElementById('yr').classList.toggle('on',p==='yearly');document.getElementById('pp').textContent=p==='monthly'?'$4.99':'$34.99';document.getElementById('pper').textContent=p==='monthly'?'/month':'/year';}
+
+// SUBMIT SPOT
+function toggleSubmitForm(){
+  const form=document.getElementById('submit-form');
+  const arrow=document.getElementById('submit-arrow');
+  const isOpen=form.classList.toggle('open');
+  arrow.classList.toggle('open',isOpen);
+}
+
+async function submitSpot(){
+  const name=document.getElementById('sf-name').value.trim();
+  const cat=document.getElementById('sf-cat').value;
+  const hood=document.getElementById('sf-hood').value.trim();
+  const about=document.getElementById('sf-about').value.trim();
+  const secret=document.getElementById('sf-secret').value.trim();
+  const isVegan=document.getElementById('sf-vegan').checked;
+  if(!name||!cat||!hood||!about||!secret){toast('Please fill in all fields ✏️');return;}
+  const keys=isVegan?3:2;
+  toast('Submitting your spot...');
+  const spot = {
+    name, category: cat, neighborhood: hood,
+    city: S.city, about, secret,
+    is_vegan: isVegan, is_featured: false, saves_count: 0,
+    photo_url: getDefaultPhoto(cat),
+  };
+  const ok = await saveSpotToDB(spot);
+  ['sf-name','sf-hood','sf-about','sf-secret'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sf-cat').value='';
+  document.getElementById('sf-vegan').checked=false;
+  toggleSubmitForm();
+  if(ok){
+    toast('🎉 Spot submitted! +'+keys+' keys earned');
+    loadAndRenderSpots();
+  } else {
+    toast('Spot saved locally — will sync when online');
+  }
+}
+
+function simulateSubscribe(){
+  S.subscribed=true;
+  closePricing();
+  renderSpots();
+  toast('🎉 Welcome to Gem Pass! All spots unlocked.');
+  document.getElementById('tier-badge') && (document.getElementById('tier-badge').textContent='GEM PASS ✓');
+}
+function simulateSubscribe(){window.open('https://artmadrid.gumroad.com/l/ggajk','_blank');S.subscribed=true;renderSpots();;}
+
+// ════════════════════
+// MAPBOX REAL MAP
+// ════════════════════
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibHV4dXJ5MSIsImEiOiJjbW90ajh2eHUwNHpwMnJvbjJkbjRucW8zIn0.2ehlGUpofPDPMdR2FZ118A';
+let mapboxMap = null;
+let mapMarkers = [];
+
+function initMap() {
+  if(typeof mapboxgl === 'undefined') {
+    setTimeout(initMap, 300);
+    return;
+  }
+  if(mapboxMap) { addMapPins(); return; }
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  mapboxMap = new mapboxgl.Map({
+    container: 'mapbox-map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [-117.9290, 33.6189],
+    zoom: 12,
+  });
+  mapboxMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+  mapboxMap.on('load', () => { addMapPins(); });
+}
+
+function addMapPins() {
+  if(!mapboxMap) return;
+  // Clear existing markers
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers = [];
+
+  const citySpots = SPOTS.filter(s => s.city.toLowerCase() === S.city.toLowerCase() && s.lat && s.lng);
+
+  citySpots.forEach(spot => {
+    // Create custom marker element
+    const el = document.createElement('div');
+    el.style.cssText = `
+      width:38px;height:38px;border-radius:50%;
+      background:${spot.vegan ? '#3d7a47' : '#e07b3a'};
+      border:2.5px solid white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;cursor:pointer;
+      box-shadow:0 3px 10px rgba(0,0,0,0.25);
+      transition:transform 0.2s;
+    `;
+    el.innerHTML = spot.emoji || '📍';
+    el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.15)');
+    el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
+    el.addEventListener('click', () => openDetail(spot.id));
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([spot.lng, spot.lat])
+      .setPopup(new mapboxgl.Popup({offset:25, closeButton:false}).setHTML(`
+        <div style="font-family:'Nunito',sans-serif;padding:4px">
+          <div style="font-weight:800;font-size:13px;color:#1e1812;margin-bottom:2px">${spot.name}</div>
+          <div style="font-size:11px;color:#7a6558">${spot.hood} · ${spot.cat}</div>
+          ${spot.vegan ? '<div style="font-size:10px;color:#3d7a47;font-weight:700;margin-top:3px">🌱 Vegan friendly</div>' : ''}
+        </div>
+      `))
+      .addTo(mapboxMap);
+
+    mapMarkers.push(marker);
+  });
+
+  // Fit map to show all pins
+  if(citySpots.length > 0) {
+    const bounds = new mapboxgl.LngLatBounds();
+    citySpots.forEach(s => bounds.extend([s.lng, s.lat]));
+    mapboxMap.fitBounds(bounds, {padding: 60, maxZoom: 14});
+  }
+}
+
+function renderMap() {
+  document.getElementById('mcity').textContent = S.city;
+  // Init map on first load
+  try {
+    if(!mapboxMap) {
+      setTimeout(() => { initMap(); }, 200);
+    } else {
+      addMapPins();
+      const citySpots = SPOTS.filter(s => s.city.toLowerCase() === S.city.toLowerCase() && s.lat && s.lng);
+      if(citySpots.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        citySpots.forEach(s => bounds.extend([s.lng, s.lat]));
+        mapboxMap.fitBounds(bounds, {padding:60, maxZoom:14});
+      }
+    }
+  } catch(e) { console.log('Map error:', e); }
+  // Mini cards
+  document.getElementById('mcards').innerHTML = SPOTS
+    .filter(s => s.city.toLowerCase() === S.city.toLowerCase())
+    .slice(0,6).map(s => `
+      <div class="mcard" onclick="openDetail(${s.id})">
+        <img class="mcard-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.style.background='#eef5ef';this.style.display='none'">
+        <div class="mcard-body">
+          <div class="mc-name">${s.name}</div>
+          <div class="mc-hood">${s.hood}</div>
+        </div>
+      </div>`).join('');
+}
+
+let _t;
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(_t);_t=setTimeout(()=>e.classList.remove('show'),2400);}
+</script>
+</body>
+</html>
