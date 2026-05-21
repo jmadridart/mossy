@@ -614,13 +614,7 @@ function renderSpots(){
   }
   document.getElementById("slist").innerHTML=html;
   // Event delegation backup for mobile
-  document.getElementById("slist").onclick=function(e){
-    var card=e.target.closest(".sc");
-    if(card){
-      var onclick=card.getAttribute("onclick");
-      if(onclick)eval(onclick);
-    }
-  };
+
 }
 
 function toggleSave(id){
@@ -631,7 +625,7 @@ function toggleSave(id){
 }
 
 function openDetail(id){
-  var s=SPOTS.find(function(x){return x.id==id;});
+  var numId=parseInt(id)||id; var s=SPOTS.find(function(x){return x.id==numId;});
   if(!s)return;
   S.detail=id;
   document.getElementById("dhood").textContent=s.hood;
