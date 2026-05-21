@@ -251,8 +251,8 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .rl{display:block;text-align:center;padding:12px;font-size:13px;color:var(--t3);font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:none;width:100%;font-family:'Nunito',sans-serif;}
 .leg{font-size:10px;color:var(--t3);text-align:center;line-height:1.6;padding:0 10px;}
 /* CITY PICKER */
-#cp{position:fixed;inset:0;background:rgba(248,245,240,.97);z-index:400;display:none;flex-direction:column;backdrop-filter:blur(8px);}
-#cp.open{display:flex;}
+#cp{position:fixed;inset:0;background:rgba(248,245,240,.97);z-index:400;display:none;flex-direction:column;backdrop-filter:blur(8px);pointer-events:none;}
+#cp.open{display:flex;pointer-events:all;}
 .cph{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1.5px solid var(--border);}
 .cpt{font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);}
 .cpc{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--t2);}
@@ -721,7 +721,9 @@ function renderCityList(){
 
 function pickCity(c){
   S.city=c;S.filter="All";
-  document.getElementById("cp").classList.remove("open");
+  var cpEl=document.getElementById("cp");
+  cpEl.classList.remove("open");
+  cpEl.style.pointerEvents="none";
   document.getElementById("cname").textContent=c;
   var mc=document.getElementById("mcity");if(mc)mc.textContent=c;
   try{document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on");});document.querySelectorAll(".chip")[0].classList.add("on");}catch(e){}
@@ -729,7 +731,7 @@ function pickCity(c){
   renderSpots();
 }
 
-function openCP(){document.getElementById("cp").classList.add("open");renderCityList();}
+function openCP(){var cpEl=document.getElementById("cp");cpEl.classList.add("open");cpEl.style.pointerEvents="all";renderCityList();}
 function closeCP(){document.getElementById("cp").classList.remove("open");}
 function openPricing(){document.getElementById("pricing-screen").classList.add("open");}
 function closePricing(){document.getElementById("pricing-screen").classList.remove("open");}
