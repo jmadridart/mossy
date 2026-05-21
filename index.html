@@ -485,9 +485,6 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 </div>
 
 <script>
-
-
-// Real Unsplash photos matched to each spot type
 const SPOTS=[
   {id:1,name:"Skäl Pizza",emoji:"🍕",lat:33.6136,lng:-117.9267,cat:"Restaurant",hood:"Lido Village",city:"Newport Beach",about:"A waterfront wood-fired pizza spot tucked into Lido Marina Village that most people walk past without realizing how special it is. Founded by the chef behind Malibu Farm — vegetable-forward, minimal, and completely its own thing.",secret:"Sit outside on the harbor walk at golden hour — that's the move. Order the avocado pizza or the brown butter beet pasta. Ask for vegan options — they have several. Happy hour Mon, Thu & Fri 2–5pm. 3400 Via Oporto Suite 104, Newport Beach.",vibe:"Waterfront Gem",vegan:false,featured:true,saves:312,tier:1,photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80",px:52,py:48},
   {id:2,name:"Moulin",emoji:"☕",lat:33.6178,lng:-117.8714,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A Parisian-style café that feels like it was transported directly from the 7th arrondissement. Fresh pastries made overnight, strong café au lait, and a tucked-away patio that's easy to linger on.",secret:"The patio in the back is where locals sit — walk through and ask for a table outside. Get there before 9am on weekends or the croissants are gone. Order the Croque Madame. 1000 Bristol St N, Newport Beach.",vibe:"Paris by the Sea",vegan:false,featured:false,saves:578,tier:1,photo:"https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80",px:38,py:35},
@@ -528,323 +525,8 @@ const EVENTS=[
   {id:6,spot:"Silver Trumpet",emoji:"🎷",title:"Pre-Show Dinner Package",desc:"Three course dinner timed perfectly before a Segerstrom Center show. The kitchen knows the curtain time and gets you out. Not listed on their website.",date:"Show nights",time:"5:30pm",price:65,left:8,vegan:false,tag:"Almost Gone",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
 ];
 
-const S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
 
-
-// ════════════════════
-// SUPABASE CONNECTION
-// ════════════════════
-const SUPABASE_URL = 'https://xozehljexzqoyvrxyklf.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_trPsJ6bYk9B5gZHoktcYLA_YnYCJif9';
-
-async function supabaseFetch(endpoint, options = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation',
-    },
-    ...options,
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-}
-
-// Load spots from database for a city
-async function loadSpotsFromDB(city) {
-  try {
-    const data = await supabaseFetch(`spots?city=eq.${encodeURIComponent(city)}&order=is_featured.desc,saves_count.desc`);
-    return data;
-  } catch (e) {
-    console.error('Error loading spots:', e);
-    return [];
-  }
-}
-
-// Save a submitted spot to database
-async function saveSpotToDB(spot) {
-  try {
-    await supabaseFetch('spots', {
-      method: 'POST',
-      prefer: 'return=minimal',
-      body: JSON.stringify(spot),
-    });
-    return true;
-  } catch (e) {
-    console.error('Error saving spot:', e);
-    return false;
-  }
-}
-
-// Load spots and merge with hardcoded ones
-async function loadAndRenderSpots() {
-  const city = S.city;
-  showLoadingState();
-  // Always include hardcoded spots that match this city
-  const hardcoded = SPOTS.filter(s => s.city.toLowerCase() === city.toLowerCase());
-  try {
-    const dbSpots = await loadSpotsFromDB(city);
-    const mapped = dbSpots.map((s, i) => ({
-      id: 1000 + i,
-      name: s.name,
-      cat: s.category,
-      hood: s.neighborhood,
-      city: s.city,
-      about: s.about,
-      secret: s.secret,
-      vibe: s.vibe || 'Hidden Gem',
-      vegan: s.is_vegan,
-      featured: s.is_featured,
-      saves: s.saves_count || 0,
-      tier: 1,
-      photo: s.photo_url || getDefaultPhoto(s.category),
-      px: Math.floor(Math.random() * 70) + 15,
-      py: Math.floor(Math.random() * 60) + 15,
-    }));
-    S.dbSpots = [...hardcoded, ...mapped];
-  } catch(e) {
-    S.dbSpots = hardcoded;
-  }
-  hideLoadingState();
-  renderSpots();
-}
-
-function getDefaultPhoto(cat) {
-  const photos = {
-    'Restaurant': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
-    'Café': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80',
-    'Bar': 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&q=80',
-    'Park': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&q=80',
-    'Gallery': 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&q=80',
-    'Viewpoint': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80',
-  };
-  return photos[cat] || photos['Restaurant'];
-}
-
-function showLoadingState() {
-  document.getElementById('slist').innerHTML = `
-    <div style="text-align:center;padding:60px 20px">
-      <div style="font-size:36px;margin-bottom:12px;animation:br 1.5s ease-in-out infinite">🌿</div>
-      <div style="font-family:'Lora',serif;font-size:18px;color:var(--t2);margin-bottom:6px">Finding hidden spots...</div>
-      <div style="font-size:13px;color:var(--t3)">Loading ${S.city}</div>
-    </div>`;
-}
-
-function hideLoadingState() {}
-
-
-window.onload=()=>{
-  setTimeout(()=>{
-    const sp=document.getElementById('splash');
-    sp.style.opacity='0';
-    setTimeout(()=>{
-      sp.style.display='none';
-      document.getElementById('app').classList.add('show');
-      S.filter='All';renderSpots();renderEvents();renderMap();renderCityList('');
-    },500);
-  },1900);
-};
-
-function go(tab,btn){
-  closeDetail();
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  document.getElementById(tab+'-screen').classList.add('on');
-  btn.classList.add('on');
-  if(tab==='map')renderMap();
-  if(tab==='saved')renderSaved();
-  if(tab==='profile')upProfile();
-}
-
-function toggleVegan(){
-  S.vegan=!S.vegan;
-  document.getElementById('vpill').classList.toggle('on',S.vegan);
-  document.getElementById('vbanner').style.display=S.vegan?'flex':'none';
-  document.getElementById('vtxt').textContent=S.vegan?'Vegan On':'Vegan Filter';
-  renderSpots();
-}
-
-function setFilter(f,btn){
-  S.filter=f;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  btn.classList.add('on');
-  renderSpots();
-}
-
-function filtered(city, filter, vegan){
-  city = city || S.city;
-  filter = filter || S.filter;
-  vegan = (vegan !== undefined) ? vegan : S.vegan;
-  return SPOTS.filter(s=>
-    s.city.toLowerCase()===city.toLowerCase()
-    && (filter==='All'||s.cat===filter)
-    && (vegan?s.vegan:true)
-  );
-}
-
-function catClass(c){return{Restaurant:'cres',Café:'ccaf',Bar:'cbar',Park:'cpar',Gallery:'cgal',Viewpoint:'cvp'}[c]||'cres';}
-
-function renderSpots(){
-  const spots = filtered();
-  const FREE_LIMIT = 3;
-  const subscribed = S.subscribed || false;
-  const visibleSpots = subscribed ? spots : spots.slice(0, FREE_LIMIT);
-  const hiddenCount = subscribed ? 0 : Math.max(0, spots.length - FREE_LIMIT);
-  const lbl = S.vegan ? '🌱 Vegan Spots' : S.filter === 'All' ? 'All Spots' : S.filter + 's';
-  const slbl = document.getElementById('slbl');
-  if(slbl) slbl.textContent = lbl + ' — ' + spots.length + ' spots';
-  if(!spots.length){
-    document.getElementById('slist').innerHTML = '<div class="empty"><div class="empty-emoji">🔍</div><div class="empty-title">No spots found</div><div class="empty-sub">Try a different filter or city</div></div>';
-    return;
-  }
-  let html = visibleSpots.map((s,i) => {
-    const saved = S.saved.has(s.id);
-    return '<div class="sc" style="animation-delay:'+(i*.06)+'s;cursor:pointer" onclick="openDetail('+s.id+')">'
-      +'<div style="position:relative;overflow:hidden;height:160px;background:var(--bg)">'
-      +'<img style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none" src="'+s.photo+'" loading="lazy" onerror="this.style.display='none'">'
-      +'<div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(30,24,18,0.55));pointer-events:none"></div>'
-      +(s.featured?'<span style="position:absolute;top:10px;left:10px;background:var(--yellow);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;pointer-events:none">⭐ Featured</span>':'')
-      +(s.vegan?'<span style="position:absolute;top:10px;right:10px;background:var(--green);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;pointer-events:none">🌱 Vegan</span>':'')
-      +'</div>'
-      +'<div class="sbody">'
-      +'<div class="smeta"><span class="scat '+catClass(s.cat)+'">'+s.cat+'</span><span class="shood">'+s.hood+'</span></div>'
-      +'<div class="sname">'+s.name+'</div>'
-      +'<div class="sdesc">'+s.about+'</div>'
-      +'<div class="sfooter">'
-      +'<span class="ssaves">♡ '+s.saves.toLocaleString()+' saves</span>'
-      +'<button class="svbtn'+(saved?' saved':'')+'" onclick="event.stopPropagation();toggleSave('+s.id+')">'+(saved?'♥':'♡')+'</button>'
-      +'</div></div></div>';
-  }).join('');
-  if(hiddenCount > 0){
-    html += `<div style="background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;">
-      <div style="font-size:32px;margin-bottom:10px">🔒</div>
-      <div style="font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px">${hiddenCount} more spots hidden</div>
-      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Get Gem Pass to unlock all spots and secret directions.</div>
-      <button onclick="openPricing()" style="background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Get Gem Pass — $6.99/mo</button>
-    </div>`;
-  }
-  document.getElementById('slist').innerHTML = html;
-}
-
-function toggleSave(id){
-  if(S.saved.has(id)){S.saved.delete(id);toast('Removed from saved');}
-  else{S.saved.add(id);toast('Saved! ♥');}
-  renderSpots();renderSaved();upProfile();
-  if(S.detail===id)upDetailSave();
-}
-
-function openDetail(id){
-  const s=SPOTS.find(x=>x.id==id);if(!s){console.log("Spot not found:",id);return;}
-  S.detail=id;
-  document.getElementById('dhood').textContent=s.hood;
-  const img=document.getElementById('dhero-img');
-  img.src=s.photo;img.alt=s.name;img.style.display='block';
-  document.getElementById('dhero-wrap').style.background=s.vegan?'linear-gradient(135deg,#eef5ef,#d8eedd)':'linear-gradient(135deg,#fef2eb,#fde4d0)';
-  document.getElementById('dhero-vibe').textContent=s.vibe;
-  document.getElementById('dtags').innerHTML=`<span class="scat ${catClass(s.cat)}">${s.cat}</span>${s.vegan?'<span class="scat" style="background:var(--gbg);color:var(--green)">🌱 Vegan</span>':''}`;
-  document.getElementById('dname').textContent=s.name;
-  document.getElementById('dloc').textContent=s.hood+' · '+s.city;
-  document.getElementById('dabout').textContent=s.about;
-  const isSubbed = S.subscribed || false;
-  if(isSubbed) {
-    document.getElementById('dsec').textContent=s.secret;
-    document.getElementById('d-secret-box').style.filter='none';
-    document.getElementById('d-lock-overlay').style.display='none';
-  } else {
-    document.getElementById('dsec').textContent=s.secret;
-    document.getElementById('d-secret-box').style.filter='blur(5px)';
-    document.getElementById('d-lock-overlay').style.display='flex';
-  }
-  document.getElementById('dsaves').textContent=s.saves.toLocaleString();
-  document.getElementById('dtier').textContent='Tier '+s.tier;
-  document.getElementById('dvbox').style.display=s.vegan?'flex':'none';
-  // Wire up directions button
-  const dirBtn = document.getElementById('dirbtn');
-  if(dirBtn){
-    dirBtn.onclick = function(){
-      if(s.lat && s.lng){
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const url = isIOS
-          ? 'maps://?daddr='+s.lat+','+s.lng+'&dirflg=d'
-          : 'https://www.google.com/maps/dir/?api=1&destination='+s.lat+','+s.lng;
-        window.open(url, '_blank');
-      } else {
-        toast('Address: '+s.secret.split('.').pop().trim());
-      }
-    };
-  }
-  upDetailSave();
-  document.getElementById('detail-screen').classList.add('open');
-  window.scrollTo(0,0);
-}
-
-function upDetailSave(){
-  const sv=S.saved.has(S.detail);
-  const b=document.getElementById('dsavebtn');
-  b.textContent=sv?'♥':'♡';b.className='dsave'+(sv?' saved':'');
-  const ob=document.getElementById('dobbtn');
-  if(ob)ob.textContent=sv?'Remove from Saved':'Save This Spot';
-}
-function detailSave(){toggleSave(S.detail);}
-function closeDetail(){document.getElementById('detail-screen').classList.remove('open');S.detail=null;}
-
-function renderEvents(){
-  document.getElementById('elist').innerHTML=EVENTS.map(ev=>`
-    <div class="ecard" onclick="toast('Ticket booking coming soon!')">
-      <img class="ecard-img" src="${ev.photo}" alt="${ev.title}" loading="lazy" onerror="this.style.display='none'">
-      <div class="ecard-body">
-        <div class="etop">
-          <div><div class="espot">${ev.spot}${ev.vegan?' · 🌱':''}</div><div class="etitle">${ev.title}</div></div>
-          <div class="epbox"><div class="eprice ${ev.price>0?'paid':''}">${ev.price===0?'Free':'$'+ev.price}</div><div class="eplbl">per person</div></div>
-        </div>
-        <div class="edesc">${ev.desc}</div>
-        <div class="ebot"><div><div class="edate">${ev.date} · ${ev.time}</div><div class="eleft">${ev.left} spots left</div></div><span class="ebadge ${ev.price===0?'free':''}">${ev.tag}</span></div>
-      </div>
-    </div>`).join('');
-}
-
-function renderSaved(){
-  const sv=SPOTS.filter(s=>S.saved.has(s.id));
-  const el=document.getElementById('savedlist');
-  if(!sv.length){el.innerHTML='<div class="empty"><div class="empty-emoji">🌿</div><div class="empty-title">Nothing saved yet</div><div class="empty-sub">Tap ♡ on any spot to save it</div></div>';return;}
-  el.innerHTML=sv.map(s=>`
-    <div class="sc" onclick="openDetail(${s.id})">
-      <div class="sphoto-wrap" style="height:110px">
-        <img class="sphoto-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(135deg,#eef5ef,#d8eedd)';this.style.display='none'">
-        <div class="sphoto-overlay"></div>
-        <div class="sphoto-badges">${s.featured?'<span class="frib">⭐ Featured</span>':'<span></span>'}${s.vegan?'<span class="vrib">🌱 Vegan</span>':''}</div>
-      </div>
-      <div class="sbody">
-        <div class="smeta"><span class="scat ${catClass(s.cat)}">${s.cat}</span><span class="shood">${s.hood}</span></div>
-        <div class="sname">${s.name}</div>
-        <div class="sfooter"><span class="ssaves">♡ ${s.saves.toLocaleString()}</span><button class="svbtn saved" onclick="event.stopPropagation();toggleSave(${s.id})">♥</button></div>
-      </div>
-    </div>`).join('');
-}
-
-function upProfile(){document.getElementById('psvd').textContent=S.saved.size;document.getElementById('pcity').textContent=S.city.slice(0,2).toUpperCase();}
-
-function renderMap(){
-  document.getElementById('mcity').textContent=S.city;
-  document.getElementById('mcnt').textContent=SPOTS.length+' spots';
-  document.getElementById('mpins').innerHTML=SPOTS.map((s,i)=>{
-    const c=s.vegan?'#3d7a47':'#e07b3a';
-    return`<div class="mpin" style="left:${s.px||50}%;top:${s.py||50}%;z-index:${12-i}" onclick="openDetail(${s.id})"><div class="mbub" style="background:${c}">${s.vegan?'🌱':'📍'}</div><div class="mtail" style="border-top:8px solid ${c}"></div></div>`;
-  }).join('');
-  document.getElementById('mcards').innerHTML=SPOTS.slice(0,6).map(s=>`
-    <div class="mcard" onclick="openDetail(${s.id})">
-      <img class="mcard-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.style.background='#eef5ef';this.style.display='none'">
-      <div class="mcard-body"><div class="mc-name">${s.name}</div><div class="mc-hood">${s.hood}</div></div>
-    </div>`).join('');
-}
-
-// Add px/py to spots for map
-const MAP_POS=[[52,48],[38,35],[54,52],[62,42],[40,65],[35,40],[22,55],[18,30],[42,68],[55,38],[70,25],[45,28]];
-SPOTS.forEach((s,i)=>{s.px=MAP_POS[i][0];s.py=MAP_POS[i][1];});
-
-const PRESET_CITIES = [
+const PRESET_CITIES=[
   {name:"Newport Beach",emoji:"🏄"},
   {name:"Huntington Beach",emoji:"🌊"},
   {name:"Laguna Beach",emoji:"🌅"},
@@ -852,195 +534,236 @@ const PRESET_CITIES = [
   {name:"Los Angeles",emoji:"🌴"},
 ];
 
-function renderCityList(){
-  const el=document.getElementById('cplist');
-  if(!el) return;
-  const cities=[
-    {name:"Newport Beach",emoji:"🏄"},
-    {name:"Huntington Beach",emoji:"🌊"},
-    {name:"Laguna Beach",emoji:"🌅"},
-    {name:"Costa Mesa",emoji:"🎷"},
-    {name:"Los Angeles",emoji:"🌴"},
-  ];
-  el.innerHTML = cities.map(c=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-radius:12px;cursor:pointer;font-size:16px;font-weight:700;color:${c.name===S.city?'var(--green)':'var(--t2)'};background:${c.name===S.city?'var(--gbg)':'transparent'};margin:2px 8px;transition:all .15s;"
-    onclick="pickCity('${c.name}')"
-    onmouseover="this.style.background='var(--gbg)'"
-    onmouseout="this.style.background='${c.name===S.city?'var(--gbg)':'transparent'}'">
-      <span>${c.emoji} ${c.name}</span>
-      <span style="font-size:14px">${c.name===S.city?'✓':'›'}</span>
-    </div>`).join('');
-}
-function filterCities(){renderCityList();}
-function pickCity(c){
-  S.city=c;
-  S.filter='All';
-  try{
-    document.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('on'));
-    const fc=document.querySelectorAll('.chip')[0];
-    if(fc)fc.classList.add('on');
-  }catch(e){}
-  document.getElementById('cname').textContent=c;
-  if(document.getElementById('mcity'))document.getElementById('mcity').textContent=c;
-  if(document.getElementById('pcity'))document.getElementById('pcity').textContent=c.split(' ')[0];
-  document.getElementById('cp').classList.remove('open');
-  toast('Now exploring '+c+' 🌿');
-  renderSpotsForCity(c);
-}
-function openCP(){document.getElementById('cp').classList.add('open');renderCityList();}
-function closeCP(){document.getElementById('cp').classList.remove('open');}
-function openPricing(){document.getElementById('pricing-screen').classList.add('open');}
-function closePricing(){document.getElementById('pricing-screen').classList.remove('open');}
-function setPlan(p){S.plan=p;document.getElementById('mo').classList.toggle('on',p==='monthly');document.getElementById('yr').classList.toggle('on',p==='yearly');document.getElementById('pp').textContent=p==='monthly'?'$4.99':'$34.99';document.getElementById('pper').textContent=p==='monthly'?'/month':'/year';}
+const S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
 
-// SUBMIT SPOT
-function toggleSubmitForm(){
-  const form=document.getElementById('submit-form');
-  const arrow=document.getElementById('submit-arrow');
-  const isOpen=form.classList.toggle('open');
-  arrow.classList.toggle('open',isOpen);
+window.onload=function(){
+  setTimeout(function(){
+    var sp=document.getElementById("splash");
+    sp.style.opacity="0";
+    setTimeout(function(){
+      sp.style.display="none";
+      document.getElementById("app").classList.add("show");
+      renderSpots();
+      renderEvents();
+      renderCityList();
+    },500);
+  },1800);
+};
+
+function go(tab,btn){
+  closeDetail();
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("on");});
+  document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on");});
+  document.getElementById(tab+"-screen").classList.add("on");
+  btn.classList.add("on");
+  if(tab==="map")renderMap();
+  if(tab==="saved")renderSaved();
+  if(tab==="profile")upProfile();
 }
 
-async function submitSpot(){
-  const name=document.getElementById('sf-name').value.trim();
-  const cat=document.getElementById('sf-cat').value;
-  const hood=document.getElementById('sf-hood').value.trim();
-  const about=document.getElementById('sf-about').value.trim();
-  const secret=document.getElementById('sf-secret').value.trim();
-  const isVegan=document.getElementById('sf-vegan').checked;
-  if(!name||!cat||!hood||!about||!secret){toast('Please fill in all fields ✏️');return;}
-  const keys=isVegan?3:2;
-  toast('Submitting your spot...');
-  const spot = {
-    name, category: cat, neighborhood: hood,
-    city: S.city, about, secret,
-    is_vegan: isVegan, is_featured: false, saves_count: 0,
-    photo_url: getDefaultPhoto(cat),
-  };
-  const ok = await saveSpotToDB(spot);
-  ['sf-name','sf-hood','sf-about','sf-secret'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('sf-cat').value='';
-  document.getElementById('sf-vegan').checked=false;
-  toggleSubmitForm();
-  if(ok){
-    toast('🎉 Spot submitted! +'+keys+' keys earned');
-    loadAndRenderSpots();
-  } else {
-    toast('Spot saved locally — will sync when online');
-  }
-}
-
-function simulateSubscribe(){
-  S.subscribed=true;
-  closePricing();
+function toggleVegan(){
+  S.vegan=!S.vegan;
+  document.getElementById("vpill").classList.toggle("on",S.vegan);
+  document.getElementById("vbanner").style.display=S.vegan?"flex":"none";
+  document.getElementById("vtxt").textContent=S.vegan?"Vegan On":"Vegan Filter";
   renderSpots();
-  toast('🎉 Welcome to Gem Pass! All spots unlocked.');
-  document.getElementById('tier-badge') && (document.getElementById('tier-badge').textContent='GEM PASS ✓');
 }
-function simulateSubscribe(){window.open('https://artmadrid.gumroad.com/l/ggajk','_blank');S.subscribed=true;renderSpots();;}
 
-// ════════════════════
-// MAPBOX REAL MAP
-// ════════════════════
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibHV4dXJ5MSIsImEiOiJjbW90ajh2eHUwNHpwMnJvbjJkbjRucW8zIn0.2ehlGUpofPDPMdR2FZ118A';
-let mapboxMap = null;
-let mapMarkers = [];
+function setFilter(f,btn){
+  S.filter=f;
+  document.querySelectorAll(".chip").forEach(function(c){c.classList.remove("on");});
+  btn.classList.add("on");
+  renderSpots();
+}
 
-function initMap() {
-  if(typeof mapboxgl === 'undefined') {
-    setTimeout(initMap, 300);
+function filtered(){
+  return SPOTS.filter(function(s){
+    return s.city.toLowerCase()===S.city.toLowerCase()
+      && (S.filter==="All"||s.cat===S.filter)
+      && (S.vegan?s.vegan:true);
+  });
+}
+
+function catClass(c){
+  var m={Restaurant:"cres",Café:"ccaf",Bar:"cbar",Park:"cpar",Gallery:"cgal",Viewpoint:"cvp"};
+  return m[c]||"cres";
+}
+
+function renderSpots(){
+  var spots=filtered();
+  var FREE_LIMIT=3;
+  var subscribed=S.subscribed||false;
+  var visible=subscribed?spots:spots.slice(0,FREE_LIMIT);
+  var hidden=subscribed?0:Math.max(0,spots.length-FREE_LIMIT);
+  var lbl=S.vegan?"🌱 Vegan":S.filter==="All"?"All Spots":S.filter+"s";
+  var slbl=document.getElementById("slbl");
+  if(slbl)slbl.textContent=lbl+" — "+spots.length+" spots";
+  if(!spots.length){
+    document.getElementById("slist").innerHTML="<div class=\"empty\"><div class=\"empty-emoji\">🔍</div><div class=\"empty-title\">No spots found</div><div class=\"empty-sub\">Try a different city</div></div>";
     return;
   }
-  if(mapboxMap) { addMapPins(); return; }
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-  mapboxMap = new mapboxgl.Map({
-    container: 'mapbox-map',
-    style: 'mapbox://styles/mapbox/light-v11',
-    center: [-117.9290, 33.6189],
-    zoom: 12,
-  });
-  mapboxMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-  mapboxMap.on('load', () => { addMapPins(); });
-}
-
-function addMapPins() {
-  if(!mapboxMap) return;
-  // Clear existing markers
-  mapMarkers.forEach(m => m.remove());
-  mapMarkers = [];
-
-  const citySpots = SPOTS.filter(s => s.city.toLowerCase() === S.city.toLowerCase() && s.lat && s.lng);
-
-  citySpots.forEach(spot => {
-    // Create custom marker element
-    const el = document.createElement('div');
-    el.style.cssText = `
-      width:38px;height:38px;border-radius:50%;
-      background:${spot.vegan ? '#3d7a47' : '#e07b3a'};
-      border:2.5px solid white;
-      display:flex;align-items:center;justify-content:center;
-      font-size:16px;cursor:pointer;
-      box-shadow:0 3px 10px rgba(0,0,0,0.25);
-      transition:transform 0.2s;
-    `;
-    el.innerHTML = spot.emoji || '📍';
-    el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.15)');
-    el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
-    el.addEventListener('click', () => openDetail(spot.id));
-
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat([spot.lng, spot.lat])
-      .setPopup(new mapboxgl.Popup({offset:25, closeButton:false}).setHTML(`
-        <div style="font-family:'Nunito',sans-serif;padding:4px">
-          <div style="font-weight:800;font-size:13px;color:#1e1812;margin-bottom:2px">${spot.name}</div>
-          <div style="font-size:11px;color:#7a6558">${spot.hood} · ${spot.cat}</div>
-          ${spot.vegan ? '<div style="font-size:10px;color:#3d7a47;font-weight:700;margin-top:3px">🌱 Vegan friendly</div>' : ''}
-        </div>
-      `))
-      .addTo(mapboxMap);
-
-    mapMarkers.push(marker);
-  });
-
-  // Fit map to show all pins
-  if(citySpots.length > 0) {
-    const bounds = new mapboxgl.LngLatBounds();
-    citySpots.forEach(s => bounds.extend([s.lng, s.lat]));
-    mapboxMap.fitBounds(bounds, {padding: 60, maxZoom: 14});
+  var html=visible.map(function(s,i){
+    var sv=S.saved.has(s.id);
+    return "<div class=\"sc\" style=\"animation-delay:"+(i*.06)+"s\" onclick=\"openDetail("+s.id+")\"><div class=\"sphoto-wrap\"><img class=\"sphoto-img\" src=\""+s.photo+"\" loading=\"lazy\" onerror=\"this.style.display='none'\"><div class=\"sphoto-overlay\"></div>"
+      +(s.featured?"<span class=\"frib\">⭐ Featured</span>":"")
+      +(s.vegan?"<span class=\"vrib\">🌱 Vegan</span>":"")
+      +"</div><div class=\"sbody\"><div class=\"smeta\"><span class=\"scat "+catClass(s.cat)+"\">"+s.cat+"</span><span class=\"shood\">"+s.hood+"</span></div><div class=\"sname\">"+s.name+"</div><div class=\"sdesc\">"+s.about+"</div><div class=\"sfooter\"><span class=\"ssaves\">♡ "+s.saves.toLocaleString()+" saves</span><button class=\"svbtn"+(sv?" saved":"")+" \" onclick=\"event.stopPropagation();toggleSave("+s.id+")\">"+(sv?"♥":"♡")+"</button></div></div></div>";
+  }).join("");
+  if(hidden>0){
+    html+="<div style=\"background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;\"><div style=\"font-size:32px;margin-bottom:10px\">🔒</div><div style=\"font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:6px\">"+hidden+" more spots hidden</div><div style=\"font-size:13px;color:var(--t2);margin-bottom:16px\">Get Gem Pass to unlock all spots.</div><button onclick=\"openPricing()\" style=\"background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:800;cursor:pointer\">Get Gem Pass — $6.99/mo</button></div>";
   }
+  document.getElementById("slist").innerHTML=html;
 }
 
-function renderMap() {
-  document.getElementById('mcity').textContent = S.city;
-  // Init map on first load
-  try {
-    if(!mapboxMap) {
-      setTimeout(() => { initMap(); }, 200);
-    } else {
-      addMapPins();
-      const citySpots = SPOTS.filter(s => s.city.toLowerCase() === S.city.toLowerCase() && s.lat && s.lng);
-      if(citySpots.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        citySpots.forEach(s => bounds.extend([s.lng, s.lat]));
-        mapboxMap.fitBounds(bounds, {padding:60, maxZoom:14});
-      }
-    }
-  } catch(e) { console.log('Map error:', e); }
-  // Mini cards
-  document.getElementById('mcards').innerHTML = SPOTS
-    .filter(s => s.city.toLowerCase() === S.city.toLowerCase())
-    .slice(0,6).map(s => `
-      <div class="mcard" onclick="openDetail(${s.id})">
-        <img class="mcard-img" src="${s.photo}" alt="${s.name}" loading="lazy" onerror="this.style.background='#eef5ef';this.style.display='none'">
-        <div class="mcard-body">
-          <div class="mc-name">${s.name}</div>
-          <div class="mc-hood">${s.hood}</div>
-        </div>
-      </div>`).join('');
+function toggleSave(id){
+  if(S.saved.has(id)){S.saved.delete(id);toast("Removed ♡");}
+  else{S.saved.add(id);toast("Saved! ♥");}
+  renderSpots();renderSaved();upProfile();
+  if(S.detail===id)upDetailSave();
 }
 
-let _t;
-function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(_t);_t=setTimeout(()=>e.classList.remove('show'),2400);}
+function openDetail(id){
+  var s=SPOTS.find(function(x){return x.id==id;});
+  if(!s)return;
+  S.detail=id;
+  document.getElementById("dhood").textContent=s.hood;
+  var img=document.getElementById("dhero-img");
+  if(img){img.src=s.photo;img.alt=s.name;}
+  var vibe=document.getElementById("dhero-vibe");
+  if(vibe)vibe.textContent=s.vibe||"";
+  document.getElementById("dtags").innerHTML="<span class=\"scat "+catClass(s.cat)+"\">"+s.cat+"</span>"+(s.vegan?"<span class=\"scat\" style=\"background:var(--gbg);color:var(--green)\">🌱 Vegan</span>":"");
+  document.getElementById("dname").textContent=s.name;
+  document.getElementById("dloc").textContent=s.hood+" · "+s.city;
+  document.getElementById("dabout").textContent=s.about;
+  document.getElementById("dsec").textContent=s.secret;
+  document.getElementById("dsaves").textContent=s.saves.toLocaleString();
+  document.getElementById("dtier").textContent="Tier "+s.tier;
+  var dvbox=document.getElementById("dvbox");if(dvbox)dvbox.style.display=s.vegan?"flex":"none";
+  var lock=document.getElementById("d-lock-overlay");if(lock)lock.style.display="none";
+  var dirbtn=document.getElementById("dirbtn");
+  if(dirbtn){
+    dirbtn.onclick=function(){
+      if(s.lat&&s.lng){
+        var ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+        window.open(ios?"maps://?daddr="+s.lat+","+s.lng:"https://www.google.com/maps/dir/?api=1&destination="+s.lat+","+s.lng,"_blank");
+      }else toast("Directions coming soon!");
+    };
+  }
+  upDetailSave();
+  document.getElementById("detail-screen").classList.add("open");
+  window.scrollTo(0,0);
+}
+
+function upDetailSave(){
+  var sv=S.saved.has(S.detail);
+  var b=document.getElementById("dsavebtn");
+  if(b){b.textContent=sv?"♥":"♡";b.className="dsave"+(sv?" saved":"");}
+  var ob=document.getElementById("dobbtn");
+  if(ob)ob.textContent=sv?"Remove from Saved":"Save This Spot";
+}
+function detailSave(){toggleSave(S.detail);}
+function closeDetail(){document.getElementById("detail-screen").classList.remove("open");S.detail=null;}
+
+function renderEvents(){
+  document.getElementById("elist").innerHTML=EVENTS.map(function(ev){
+    return "<div class=\"ecard\" onclick=\"toast('Ticket booking coming soon!')\"><img class=\"ecard-img\" src=\""+ev.photo+"\" loading=\"lazy\" onerror=\"this.style.display='none'\"><div class=\"ecard-body\"><div class=\"etop\"><div><div class=\"espot\">"+ev.spot+(ev.vegan?" · 🌱":"")+"</div><div class=\"etitle\">"+ev.title+"</div></div><div class=\"epbox\"><div class=\"eprice"+(ev.price>0?" paid":"")+"\">"+( ev.price===0?"Free":"$"+ev.price)+"</div><div class=\"eplbl\">per person</div></div></div><div class=\"edesc\">"+ev.desc+"</div><div class=\"ebot\"><div><div class=\"edate\">"+ev.date+" · "+ev.time+"</div><div class=\"eleft\">"+ev.left+" spots left</div></div><span class=\"ebadge"+(ev.price===0?" free":"")+"\">"+ev.tag+"</span></div></div></div>";
+  }).join("");
+}
+
+function renderSaved(){
+  var sv=SPOTS.filter(function(s){return S.saved.has(s.id);});
+  var el=document.getElementById("savedlist");
+  if(!sv.length){el.innerHTML="<div class=\"empty\"><div class=\"empty-emoji\">🌿</div><div class=\"empty-title\">Nothing saved yet</div><div class=\"empty-sub\">Tap ♡ on any spot</div></div>";return;}
+  el.innerHTML=sv.map(function(s){
+    return "<div class=\"sc\" onclick=\"openDetail("+s.id+")\" ><div class=\"sphoto-wrap\" style=\"height:100px\"><img class=\"sphoto-img\" src=\""+s.photo+"\" loading=\"lazy\" onerror=\"this.style.display='none'\"><div class=\"sphoto-overlay\"></div></div><div class=\"sbody\"><div class=\"smeta\"><span class=\"scat "+catClass(s.cat)+"\">"+s.cat+"</span><span class=\"shood\">"+s.hood+"</span></div><div class=\"sname\">"+s.name+"</div><div class=\"sfooter\"><span class=\"ssaves\">♡ "+s.saves.toLocaleString()+"</span><button class=\"svbtn saved\" onclick=\"event.stopPropagation();toggleSave("+s.id+")\">♥</button></div></div></div>";
+  }).join("");
+}
+
+function upProfile(){
+  document.getElementById("psvd").textContent=S.saved.size;
+  var pc=document.getElementById("pcity");if(pc)pc.textContent=S.city.split(" ")[0];
+}
+
+function renderMap(){
+  var mc=document.getElementById("mcity");if(mc)mc.textContent=S.city;
+  if(typeof mapboxgl==="undefined"){setTimeout(renderMap,300);return;}
+  if(!window.mapboxMap){
+    mapboxgl.accessToken="pk.eyJ1IjoibHV4dXJ5MSIsImEiOiJjbW90ajh2eHUwNHpwMnJvbjJkbjRucW8zIn0.2ehlGUpofPDPMdR2FZ118A";
+    window.mapboxMap=new mapboxgl.Map({container:"mapbox-map",style:"mapbox://styles/mapbox/light-v11",center:[-117.929,33.619],zoom:11});
+    window.mapboxMap.addControl(new mapboxgl.NavigationControl(),"bottom-right");
+    window.mapboxMap.on("load",function(){addMapPins();});
+  }else{addMapPins();}
+  var el=document.getElementById("mcards");
+  if(el)el.innerHTML=SPOTS.filter(function(s){return s.city.toLowerCase()===S.city.toLowerCase();}).slice(0,6).map(function(s){
+    return "<div class=\"mcard\" onclick=\"openDetail("+s.id+")\" ><img class=\"mcard-img\" src=\""+s.photo+"\" loading=\"lazy\" onerror=\"this.style.display='none'\"><div class=\"mcard-body\"><div class=\"mc-name\">"+s.name+"</div><div class=\"mc-hood\">"+s.hood+"</div></div></div>";
+  }).join("");
+}
+
+function addMapPins(){
+  if(!window.mapboxMap)return;
+  if(window.mapMarkers)window.mapMarkers.forEach(function(m){m.remove();});
+  window.mapMarkers=[];
+  SPOTS.filter(function(s){return s.city.toLowerCase()===S.city.toLowerCase()&&s.lat&&s.lng;}).forEach(function(s){
+    var el=document.createElement("div");
+    el.style.cssText="width:36px;height:36px;border-radius:50%;background:"+(s.vegan?"#3d7a47":"#e07b3a")+";border:2.5px solid white;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2)";
+    el.innerHTML=s.emoji||"📍";
+    el.onclick=function(){openDetail(s.id);};
+    window.mapMarkers.push(new mapboxgl.Marker(el).setLngLat([s.lng,s.lat]).addTo(window.mapboxMap));
+  });
+}
+
+function renderCityList(){
+  var el=document.getElementById("cplist");if(!el)return;
+  el.innerHTML=PRESET_CITIES.map(function(c){
+    return "<div style=\"display:flex;justify-content:space-between;align-items:center;padding:16px 20px;cursor:pointer;font-size:16px;font-weight:700;color:"+(c.name===S.city?"var(--green)":"var(--t2)")+";background:"+(c.name===S.city?"var(--gbg)":"transparent")+"\" onclick=\"pickCity('"+c.name+"')\" ><span>"+c.emoji+" "+c.name+"</span><span>"+(c.name===S.city?"✓":"›")+"</span></div>";
+  }).join("");
+}
+
+function pickCity(c){
+  S.city=c;S.filter="All";
+  document.getElementById("cp").classList.remove("open");
+  document.getElementById("cname").textContent=c;
+  var mc=document.getElementById("mcity");if(mc)mc.textContent=c;
+  try{document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on");});document.querySelectorAll(".chip")[0].classList.add("on");}catch(e){}
+  toast("Now exploring "+c+" 🌿");
+  renderSpots();
+}
+
+function openCP(){document.getElementById("cp").classList.add("open");renderCityList();}
+function closeCP(){document.getElementById("cp").classList.remove("open");}
+function openPricing(){document.getElementById("pricing-screen").classList.add("open");}
+function closePricing(){document.getElementById("pricing-screen").classList.remove("open");}
+function setPlan(p){
+  S.plan=p;
+  document.getElementById("mo").classList.toggle("on",p==="monthly");
+  document.getElementById("yr").classList.toggle("on",p==="yearly");
+  document.getElementById("pp").textContent=p==="monthly"?"$6.99":"$49.99";
+  document.getElementById("pper").textContent=p==="monthly"?"/month":"/year";
+}
+function toggleSubmitForm(){
+  var form=document.getElementById("submit-form");
+  var arrow=document.getElementById("submit-arrow");
+  var open=form.classList.toggle("open");
+  if(arrow)arrow.classList.toggle("open",open);
+}
+async function submitSpot(){
+  var name=document.getElementById("sf-name").value.trim();
+  var cat=document.getElementById("sf-cat").value;
+  var hood=document.getElementById("sf-hood").value.trim();
+  var about=document.getElementById("sf-about").value.trim();
+  var secret=document.getElementById("sf-secret").value.trim();
+  var isVegan=document.getElementById("sf-vegan").checked;
+  if(!name||!cat||!hood||!about||!secret){toast("Please fill in all fields ✏️");return;}
+  ["sf-name","sf-hood","sf-about","sf-secret"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("sf-cat").value="";
+  document.getElementById("sf-vegan").checked=false;
+  toggleSubmitForm();
+  toast("🎉 Spot submitted! Thanks.");
+}
+function simulateSubscribe(){window.open("https://artmadrid.gumroad.com/l/ggajk","_blank");}
+var _t;
+function toast(m){var e=document.getElementById("toast");e.textContent=m;e.classList.add("show");clearTimeout(_t);_t=setTimeout(function(){e.classList.remove("show");},2400);}
+
 </script>
 </body>
 </html>
