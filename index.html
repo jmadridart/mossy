@@ -613,6 +613,14 @@ function renderSpots(){
     html+="<div style=\"background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;\"><div style=\"font-size:32px;margin-bottom:10px\">🔒</div><div style=\"font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:6px\">"+hidden+" more spots hidden</div><div style=\"font-size:13px;color:var(--t2);margin-bottom:16px\">Get Gem Pass to unlock all spots.</div><button onclick=\"openPricing()\" style=\"background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:800;cursor:pointer\">Get Gem Pass — $6.99/mo</button></div>";
   }
   document.getElementById("slist").innerHTML=html;
+  // Event delegation backup for mobile
+  document.getElementById("slist").onclick=function(e){
+    var card=e.target.closest(".sc");
+    if(card){
+      var onclick=card.getAttribute("onclick");
+      if(onclick)eval(onclick);
+    }
+  };
 }
 
 function toggleSave(id){
