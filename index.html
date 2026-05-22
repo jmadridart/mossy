@@ -19,7 +19,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 #app{display:none;min-height:100vh;padding-bottom:64px;}
 #app.show{display:block;animation:rise .5s ease;}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.screen{display:none;}.screen.on{display:block;animation:rise .3s ease;}
+.screen{display:none;}.screen.on{display:block;}
 #nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:white;border-top:1.5px solid var(--border);display:flex;height:68px;box-shadow:0 -4px 24px rgba(0,0,0,.06);z-index:100;align-items:center;padding:0 4px;}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;cursor:pointer;padding:10px 4px;transition:all .2s;}
 .nb svg{width:22px;height:22px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
@@ -27,7 +27,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .nb-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);transition:color .2s;}
 .nb.on .nb-label{color:var(--green);}
 /* HEADER */
-.hdr{background:white;padding:20px 20px 16px;border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:50;}
+.hdr{background:white;padding:20px 20px 16px;border-bottom:1.5px solid var(--border);position:sticky;top:0;}
 .htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .aname{font-family:'Lora',serif;font-size:26px;font-weight:600;color:var(--text);}
 .vpill{display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border2);border-radius:100px;padding:6px 12px;cursor:pointer;transition:all .25s;font-size:12px;font-weight:700;color:var(--t2);}
@@ -54,7 +54,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .sw{padding:8px 20px 20px;}
 .slbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:14px;}
 /* SPOT CARDS WITH PHOTOS */
-.sc{background:white;border-radius:20px;border:1.5px solid var(--border);margin-bottom:16px;overflow:hidden;cursor:pointer;box-shadow:0 2px 16px rgba(0,0,0,.05);transition:all .22s;animation:cardIn .4s ease both;}
+.sc{background:white;border-radius:20px;border:1.5px solid var(--border);margin-bottom:16px;overflow:hidden;cursor:pointer;box-shadow:0 2px 16px rgba(0,0,0,.05);transition:all .22s;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0.1);}
 @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .sc:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.1);}
 .sc:active{transform:scale(.99);}
@@ -485,7 +485,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 </div>
 
 <script>
-const SPOTS=[
+var SPOTS=[
   {id:1,name:"Skäl Pizza",emoji:"🍕",lat:33.6136,lng:-117.9267,cat:"Restaurant",hood:"Lido Village",city:"Newport Beach",about:"A waterfront wood-fired pizza spot tucked into Lido Marina Village that most people walk past without realizing how special it is. Founded by the chef behind Malibu Farm — vegetable-forward, minimal, and completely its own thing.",secret:"Sit outside on the harbor walk at golden hour — that's the move. Order the avocado pizza or the brown butter beet pasta. Ask for vegan options — they have several. Happy hour Mon, Thu & Fri 2–5pm. 3400 Via Oporto Suite 104, Newport Beach.",vibe:"Waterfront Gem",vegan:false,featured:true,saves:312,tier:1,photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80",px:52,py:48},
   {id:2,name:"Moulin",emoji:"☕",lat:33.6178,lng:-117.8714,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A Parisian-style café that feels like it was transported directly from the 7th arrondissement. Fresh pastries made overnight, strong café au lait, and a tucked-away patio that's easy to linger on.",secret:"The patio in the back is where locals sit — walk through and ask for a table outside. Get there before 9am on weekends or the croissants are gone. Order the Croque Madame. 1000 Bristol St N, Newport Beach.",vibe:"Paris by the Sea",vegan:false,featured:false,saves:578,tier:1,photo:"https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80",px:38,py:35},
   {id:3,name:"Lido Bottle Works",emoji:"🍷",lat:33.6134,lng:-117.927,cat:"Bar",hood:"Lido Marina Village",city:"Newport Beach",about:"A craft beer, wine and bottle shop owned by Newport Beach natives. Waterfront, locally sourced, with winemaker events, live music and an art gallery rotating through constantly.",secret:"Go on a Thursday evening for winemaker events that aren't advertised online. The cauliflower small plate is surprisingly the best thing on the menu. Sit at the bar and ask what's new on tap. 3408 Via Oporto, Newport Beach.",vibe:"Local Waterfront",vegan:false,featured:false,saves:734,tier:1,photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80",px:54,py:52},
@@ -514,9 +514,9 @@ const SPOTS=[
   {id:26,name:"Maciel's Plant-Based Butcher",cat:"Restaurant",hood:"Highland Park",city:"Los Angeles",about:"A women-owned, Latinx-owned plant-based deli blending Mexican ingredients with chickpeas, beans and beets to make the best vegan pastrami, chorizo and chicharrones in LA. Named one of Eater LA's Essential Restaurants.",secret:"The Reuben and The Smokey are the move — both better than most deli sandwiches with actual meat. Go early for the breakfast burritos. They sell meats and cheeses by the pound from the deli case — perfect for a vegan charcuterie situation. 5933 York Blvd, Highland Park.",vibe:"Latinx Gem",vegan:true,featured:true,saves:654,tier:1,emoji:"🥪",photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80",lat:34.1136,lng:-118.2019,px:72,py:18},
   {id:27,name:"Groundwork Coffee",cat:"Café",hood:"Arts District",city:"Los Angeles",about:"Inside the restored North Hollywood Historic Train Depot — a registered State Historic Landmark built in the 1890s. One of LA's best organic coffee spots and almost nobody knows about the depot location.",secret:"The North Hollywood location inside the old train depot is the one — 11275 Chandler Blvd. Built in the early 1890s, abandoned for years, now one of the most atmospheric coffee shops in LA. Go early, grab a Honeybee Latte and sit outside on the platform.",vibe:"Historic Landmark",vegan:true,featured:false,saves:445,tier:1,emoji:"🚂",photo:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80",lat:34.1706,lng:-118.3803,px:25,py:12},
   {id:28,name:"Mr. Charlie's",cat:"Restaurant",hood:"Melrose",city:"Los Angeles",about:"The vegan McDonald's. Bright red and yellow storefront on La Brea that went viral on TikTok and never slowed down. Every single item on the menu is plant-based. Even non-vegans can't tell the difference.",secret:"Go on a Monday — they sell the Not A Hamburger for 99 cents, limit 2 per person. The Frowny Meal is the move — burger, nuggets, fries and a drink. Closed Sundays. Get there before the lunch rush or you will wait. 612 N La Brea Ave, Los Angeles.",vibe:"Vegan Fast Food",vegan:true,featured:false,saves:2341,tier:1,emoji:"🍔",photo:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80",lat:34.0766,lng:-118.3447,px:18,py:42}
-];
+].filter(Boolean);
 
-const EVENTS=[
+var EVENTS=[
   {id:1,spot:"Lido Bottle Works",emoji:"🍷",title:"Sunday Supper Tasting Menu",desc:"Every Sunday the kitchen creates a brand new tasting menu — whatever was at the farmers market that week. Select wine bottles are 50% off all night.",date:"Every Sunday",time:"5pm",price:65,left:12,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
   {id:2,spot:"Lido Bottle Works",emoji:"🎵",title:"Live Music on the Lido Deck",desc:"Local musicians play waterside every Thursday, Saturday and Sunday. Free to attend, just grab a drink and a seat on the deck before it fills up.",date:"Thu, Sat & Sun",time:"Noon–3pm",price:0,left:40,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80"},
   {id:3,spot:"Marine Room Tavern",emoji:"🎸",title:"Live Music Every Night",desc:"Orange County's second oldest bar has live music seven nights a week. Pool table, 200+ whiskeys, and a crowd that's been coming here since 1934.",date:"Every night",time:"9pm",price:0,left:99,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1501612780327-45045538702b?w=600&q=80"},
@@ -526,7 +526,7 @@ const EVENTS=[
 ];
 
 
-const PRESET_CITIES=[
+var PRESET_CITIES=[
   {name:"Newport Beach",emoji:"🏄"},
   {name:"Huntington Beach",emoji:"🌊"},
   {name:"Laguna Beach",emoji:"🌅"},
@@ -534,7 +534,7 @@ const PRESET_CITIES=[
   {name:"Los Angeles",emoji:"🌴"},
 ];
 
-const S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
+var S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
 
 window.onload=function(){
   setTimeout(function(){
@@ -625,7 +625,7 @@ function toggleSave(id){
 }
 
 function openDetail(id){
-  var numId=parseInt(id)||id; var s=SPOTS.find(function(x){return x.id==numId;});
+  var numId=parseInt(id)||id; var s=SPOTS.find(function(x){return x && x.id==numId;});
   if(!s)return;
   S.detail=id;
   document.getElementById("dhood").textContent=s.hood;
