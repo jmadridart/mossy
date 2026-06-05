@@ -489,7 +489,7 @@ var SPOTS=[
   {id:1,name:"Skäl Pizza",emoji:"🍕",lat:33.6136,lng:-117.9267,cat:"Restaurant",hood:"Lido Village",city:"Newport Beach",about:"A waterfront wood-fired pizza spot tucked into Lido Marina Village that most people walk past without realizing how special it is. Founded by the chef behind Malibu Farm — vegetable-forward, minimal, and completely its own thing.",secret:"Sit outside on the harbor walk at golden hour — that's the move. Order the avocado pizza or the brown butter beet pasta. Ask for vegan options — they have several. Happy hour Mon, Thu & Fri 2–5pm. 3400 Via Oporto Suite 104, Newport Beach.",vibe:"Waterfront Gem",vegan:false,featured:true,saves:312,tier:1,photo:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80",px:52,py:48},
   {id:2,name:"Moulin",emoji:"☕",lat:33.6178,lng:-117.8714,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A Parisian-style café that feels like it was transported directly from the 7th arrondissement. Fresh pastries made overnight, strong café au lait, and a tucked-away patio that's easy to linger on.",secret:"The patio in the back is where locals sit — walk through and ask for a table outside. Get there before 9am on weekends or the croissants are gone. Order the Croque Madame. 1000 Bristol St N, Newport Beach.",vibe:"Paris by the Sea",vegan:false,featured:false,saves:578,tier:1,photo:"https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=800&q=80",px:38,py:35},
   {id:3,name:"Lido Bottle Works",emoji:"🍷",lat:33.6134,lng:-117.927,cat:"Bar",hood:"Lido Marina Village",city:"Newport Beach",about:"A craft beer, wine and bottle shop owned by Newport Beach natives. Waterfront, locally sourced, with winemaker events, live music and an art gallery rotating through constantly.",secret:"Go on a Thursday evening for winemaker events that aren't advertised online. The cauliflower small plate is surprisingly the best thing on the menu. Sit at the bar and ask what's new on tap. 3408 Via Oporto, Newport Beach.",vibe:"Local Waterfront",vegan:false,featured:false,saves:734,tier:1,photo:"https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80",px:54,py:52},
-  {id:4,name:"Buddha's Favorite",emoji:"🍱",lat:33.6064,lng:-117.8969,cat:"Restaurant",hood:"Balboa Island",city:"Newport Beach",about:"A hidden sushi gem that locals fiercely protect. Dishes made with the freshest ingredients using family recipes straight from Japan. Tourists walk right past it.",secret:"Pair any roll with their premium sake — ask for the Suehiro Gensai, which comes in a specialty wood box. No reservations — get there right at opening. Cash preferred. Ask what came in fresh that day.",vibe:"Local Secret",vegan:false,featured:false,saves:891,tier:1,photo:"https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=800&q=80",px:62,py:42},
+  {id:4,name:"Buddha's Favorite",emoji:"🍱",lat:33.6064,lng:-117.8969,cat:"Restaurant",hood:"Balboa Island",city:"Newport Beach",about:"A hidden sushi gem that locals fiercely protect. Dishes made with the freshest ingredients using family recipes straight from Japan. Tourists walk right past it.",secret:"Pair any roll with their premium sake — ask for the Suehiro Gensai, which comes in a specialty wood box. No reservations — get there right at opening. Cash preferred. Ask what came in fresh that day.",vibe:"Local Secret",vegan:false,featured:false,saves:891,tier:1,photo:"https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80",px:62,py:42},
   {id:5,name:"The Crab Cooker",emoji:"🦞",lat:33.6089,lng:-117.9287,cat:"Restaurant",hood:"Balboa Peninsula",city:"Newport Beach",about:"Since 1951 this no-frills seafood shack has been serving perfectly wood-smoked fish and a famous red clam chowder. A rite of passage for anyone who actually knows Newport.",secret:"Go right when it opens — the line builds fast. Order the clam chowder and whatever fish they smoked that morning. Cash only. No reservations ever. 2200 Newport Blvd, Newport Beach.",vibe:"Local Legend",vegan:false,featured:false,saves:1203,tier:1,photo:"https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=800&q=80",px:40,py:65},
   {id:6,name:"Sugar Shack Cafe",emoji:"🏄",lat:33.6553,lng:-117.9992,cat:"Café",hood:"Downtown HB",city:"Huntington Beach",about:"An HB institution since 1967. Covered in surfing memorabilia, generous portions, classic American breakfast. The kind of place locals have been going to their whole lives.",secret:"The back patio has almost no wait even when the front is packed — ask to sit there. Get the breakfast burrito. Go on a weekday morning before the surf crowd hits. 213½ Main St, Huntington Beach.",vibe:"Surf Institution",vegan:false,featured:true,saves:1456,tier:1,photo:"https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=800&q=80",px:35,py:40},
   {id:7,name:"Capone's",emoji:"🍸",lat:33.7073,lng:-117.9953,cat:"Bar",hood:"Beach Blvd",city:"Huntington Beach",about:"A hidden gem with a cool classic vibe that most people drive right past on Beach Blvd. The cocktails are some of the best in HB and the $12 lunch specials are unbeatable.",secret:"Ask for Jose at the bar — he's been there forever and will make you something not on the menu. Go for happy hour on weekdays. The $12 lunch specials are fresh and huge. 19688 Beach Blvd, Huntington Beach.",vibe:"Classic Dive",vegan:false,featured:false,saves:423,tier:1,photo:"https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80",px:22,py:55},
@@ -758,11 +758,27 @@ async function submitSpot(){
   var secret=document.getElementById("sf-secret").value.trim();
   var isVegan=document.getElementById("sf-vegan").checked;
   if(!name||!cat||!hood||!about||!secret){toast("Please fill in all fields ✏️");return;}
+
+  // Spam filter — reject chain restaurants and well-known places
+  var banned=["mcdonald","burger king","starbucks","subway","chipotle","taco bell","pizza hut","domino","kfc","wendy","chick-fil","panda express","in-n-out","shake shack","cheesecake factory","olive garden","applebee","chili's","denny","ihop","waffle house","red lobster","sushi roll","jersey mike","jimmy john","five guys","panera","dunkin","krispy kreme","popeyes","sonic","dairy queen","carl's jr","jack in the box","del taco","el pollo","wingstop","raising cane","habit burger","blaze pizza","pieology","mod pizza","tender lovers","dutch bros","coffee bean","peet's coffee"];
+  var nameLower=name.toLowerCase();
+  for(var i=0;i<banned.length;i++){
+    if(nameLower.includes(banned[i])){
+      toast("Please submit hidden local gems only — no chains 🙏");
+      return;
+    }
+  }
+
+  // Minimum quality check
+  if(about.length < 30){toast("Tell us more about what makes it special ✏️");return;}
+  if(secret.length < 30){toast("Add more detail to the secret directions ✏️");return;}
+  if(name.length < 3){toast("Please enter the full spot name ✏️");return;}
+
   ["sf-name","sf-hood","sf-about","sf-secret"].forEach(function(id){document.getElementById(id).value="";});
   document.getElementById("sf-cat").value="";
   document.getElementById("sf-vegan").checked=false;
   toggleSubmitForm();
-  toast("🎉 Spot submitted! Thanks.");
+  toast("🎉 Spot submitted for review! We'll verify it soon.");
 }
 function simulateSubscribe(){window.open("https://artmadrid.gumroad.com/l/ggajk","_blank");}
 var _t;
