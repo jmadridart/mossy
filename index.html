@@ -261,7 +261,16 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .cpi:hover{background:var(--gbg);color:var(--green);}
 .cpi.on{color:var(--green);background:var(--gbg);}
 .cpm{text-align:center;padding:16px;font-size:12px;font-weight:700;color:var(--t3);border-top:1px solid var(--border);}
-#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:white;border-radius:100px;padding:10px 20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.2);}
+#license-modal{position:fixed;inset:0;background:rgba(30,24,18,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+#license-modal.open{display:flex;}
+.lm-box{background:white;border-radius:24px;padding:28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.lm-title{font-family:"Lora",serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.lm-sub{font-size:13px;color:var(--t2);margin-bottom:20px;line-height:1.5;}
+.lm-input{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:12px;padding:14px;font-family:"Nunito",sans-serif;font-size:15px;color:var(--text);outline:none;letter-spacing:0.05em;margin-bottom:12px;}
+.lm-input:focus{border-color:var(--green);}
+.lm-btn{background:var(--green);color:white;border:none;border-radius:12px;padding:14px;font-family:"Nunito",sans-serif;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin-bottom:10px;}
+.lm-cancel{background:none;border:none;color:var(--t3);font-family:"Nunito",sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%;padding:8px;}
+#toast{position:fixed;bottom:90px;#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:white;border-radius:100px;padding:10px 20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.2);}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
@@ -484,7 +493,25 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 <div class="cpm">More cities coming soon 🌍</div>
 </div>
 
+<!-- LICENSE KEY MODAL -->
+<div id="license-modal">
+  <div class="lm-box">
+    <div style="font-size:36px;margin-bottom:12px">🗝️</div>
+    <div class="lm-title">Enter Your License Key</div>
+    <div class="lm-sub">After purchasing Gem Pass on Gumroad you'll receive a unique license key by email. Enter it below to unlock everything.</div>
+    <input class="lm-input" id="license-input" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    <div id="license-error" style="color:#c0392b;font-size:12px;font-weight:700;margin-bottom:10px;display:none;">Invalid key — check your email and try again.</div>
+    <button class="lm-btn" onclick="verifyLicense()">Unlock Gem Pass 🗝️</button>
+    <button class="lm-cancel" onclick="closeLicenseModal()">Cancel</button>
+    <div style="text-align:center;margin-top:8px">
+      <span style="font-size:12px;color:var(--t3)">Don't have a key? </span>
+      <span style="font-size:12px;font-weight:800;color:var(--orange);cursor:pointer" onclick="closeLicenseModal();window.open('https://artmadrid.gumroad.com/l/ggajk','_blank')">Buy Gem Pass →</span>
+    </div>
+  </div>
+</div>
+
 <script>
+
 var SPOTS=[
   {id:1,name:"Skäl Pizza",emoji:"🍕",lat:33.6136,lng:-117.9267,cat:"Restaurant",hood:"Lido Village",city:"Newport Beach",about:"A waterfront wood-fired pizza spot tucked into Lido Marina Village that most people walk past without realizing how special it is. Founded by the chef behind Malibu Farm — vegetable-forward, minimal, and completely its own thing.",secret:"Sit outside on the harbor walk at golden hour — that's the move. Order the avocado pizza or the brown butter beet pasta. Ask for vegan options — they have several. Happy hour Mon, Thu & Fri 2–5pm. 3400 Via Oporto Suite 104, Newport Beach.",vibe:"Waterfront Gem",vegan:false,featured:true,saves:312,tier:1,photo:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80",px:52,py:48},
   {id:2,name:"Moulin",emoji:"☕",lat:33.6178,lng:-117.8714,cat:"Café",hood:"Corona del Mar",city:"Newport Beach",about:"A Parisian-style café that feels like it was transported directly from the 7th arrondissement. Fresh pastries made overnight, strong café au lait, and a tucked-away patio that's easy to linger on.",secret:"The patio in the back is where locals sit — walk through and ask for a table outside. Get there before 9am on weekends or the croissants are gone. Order the Croque Madame. 1000 Bristol St N, Newport Beach.",vibe:"Paris by the Sea",vegan:false,featured:false,saves:578,tier:1,photo:"https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=800&q=80",px:38,py:35},
@@ -517,14 +544,13 @@ var SPOTS=[
 ].filter(Boolean);
 
 var EVENTS=[
-  {id:1,spot:"Lido Bottle Works",emoji:"🍷",title:"Sunday Supper Tasting Menu",desc:"Every Sunday the kitchen creates a brand new tasting menu — whatever was at the farmers market that week. Select wine bottles are 50% off all night.",date:"Every Sunday",time:"5pm",price:65,left:12,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
-  {id:2,spot:"Lido Bottle Works",emoji:"🎵",title:"Live Music on the Lido Deck",desc:"Local musicians play waterside every Thursday, Saturday and Sunday. Free to attend, just grab a drink and a seat on the deck before it fills up.",date:"Thu, Sat & Sun",time:"Noon–3pm",price:0,left:40,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80"},
-  {id:3,spot:"Marine Room Tavern",emoji:"🎸",title:"Live Music Every Night",desc:"Orange County's second oldest bar has live music seven nights a week. Pool table, 200+ whiskeys, and a crowd that's been coming here since 1934.",date:"Every night",time:"9pm",price:0,left:99,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1501612780327-45045538702b?w=600&q=80"},
-  {id:4,spot:"Skäl Pizza",emoji:"🍕",title:"Happy Hour at the Harbor",desc:"Full Skäl menu at happy hour prices harborside. Avocado pizza, brown butter pasta, natural wine. One of the best kept secrets in Lido Village.",date:"Mon, Thu & Fri",time:"2pm–5pm",price:0,left:30,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80"},
-  {id:5,spot:"Truly Pizza",emoji:"🍕",title:"Grand Opening — Laguna Beach",desc:"Truly Pizza just opened on PCH in North Laguna. One of the top 50 pizzas in the USA. The frozen white wine lemonade slurpee is already legendary.",date:"May 7",time:"11am",price:0,left:99,vegan:false,tag:"Just Opened",photo:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80"},
-  {id:6,spot:"Silver Trumpet",emoji:"🎷",title:"Pre-Show Dinner Package",desc:"Three course dinner timed perfectly before a Segerstrom Center show. The kitchen knows the curtain time and gets you out. Not listed on their website.",date:"Show nights",time:"5:30pm",price:65,left:8,vegan:false,tag:"Almost Gone",photo:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"},
+  {id:1,spot:"Marine Room Tavern",emoji:"🎸",title:"Tru Phonic Live",desc:"One of Laguna's best live bands plays the Marine Room — packed house, cheap drinks, pool table, no cover. This is what a real local bar feels like.",date:"Jun 20",time:"9pm",price:0,left:60,vegan:false,tag:"Free",photo:"https://images.unsplash.com/photo-1501612780327-45045538702b?w=800&q=80"},
+  {id:2,spot:"Lido Marina Village",emoji:"🎵",title:"Live Music on the Lido Deck",desc:"Local musicians play waterside every Thursday, Saturday and Sunday. Free, all ages, harborside. Grab a drink from Lido Bottle Works and sit on the deck.",date:"Every Thu Sat Sun",time:"Noon–3pm",price:0,left:99,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80"},
+  {id:3,spot:"Lido Marina Village",emoji:"🌅",title:"Wind Down Wednesday",desc:"Every Wednesday evening, live music fills Lido Marina Village. Shops stay open until 7pm. Grab dinner at Skäl or Lido Bottle Works and linger waterside.",date:"Every Wednesday",time:"5–7pm",price:0,left:99,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80"},
+  {id:4,spot:"The Lido Theater",emoji:"🎭",title:"Eagles Tribute — The Long Run",desc:"The Long Run performs a full Eagles tribute at the newly restored Lido Theater — Newport's landmark Art Deco venue. One of OC's best live spots most people don't know about.",date:"Jun 20",time:"8pm",price:45,left:28,vegan:false,tag:"Popular",photo:"https://images.unsplash.com/photo-1429514513361-8fa32282fd5f?w=800&q=80"},
+  {id:5,spot:"The Lido Theater",emoji:"🎤",title:"David Spade — I Got a Feel for It",desc:"David Spade performs stand-up at the Lido Theater. Intimate Art Deco venue right on Via Lido — Newport's most underrated spot for live shows.",date:"Jun 25 & 28",time:"8pm",price:55,left:14,vegan:false,tag:"Almost Gone",photo:"https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&q=80"},
+  {id:6,spot:"Skäl Pizza",emoji:"🍕",title:"Happy Hour at the Harbor",desc:"Full Skäl menu at happy hour prices harborside. Avocado pizza, brown butter pasta, natural wine. One of the best kept secrets in Lido Village.",date:"Mon Thu & Fri",time:"2–5pm",price:0,left:30,vegan:false,tag:"Weekly",photo:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80"},
 ];
-
 
 var PRESET_CITIES=[
   {name:"Newport Beach",emoji:"🏄"},
@@ -534,9 +560,18 @@ var PRESET_CITIES=[
   {name:"Los Angeles",emoji:"🌴"},
 ];
 
-var S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:true};
+var S={city:"Newport Beach",filter:"All",vegan:false,saved:new Set(),detail:null,plan:"monthly",subscribed:false};
 
 window.onload=function(){
+  // Check for pass in URL or localStorage
+  var params=new URLSearchParams(window.location.search);
+  if(params.get("pass")==="gem2024"){
+    S.subscribed=true;
+    localStorage.setItem("gem_pass","true");
+  }
+  if(localStorage.getItem("gem_pass")==="true"){
+    S.subscribed=true;
+  }
   setTimeout(function(){
     var sp=document.getElementById("splash");
     sp.style.opacity="0";
@@ -610,7 +645,7 @@ function renderSpots(){
       +"</div><div class=\"sbody\"><div class=\"smeta\"><span class=\"scat "+catClass(s.cat)+"\">"+s.cat+"</span><span class=\"shood\">"+s.hood+"</span></div><div class=\"sname\">"+s.name+"</div><div class=\"sdesc\">"+s.about+"</div><div class=\"sfooter\"><span class=\"ssaves\">♡ "+s.saves.toLocaleString()+" saves</span><button class=\"svbtn"+(sv?" saved":"")+" \" onclick=\"event.stopPropagation();toggleSave("+s.id+")\">"+(sv?"♥":"♡")+"</button></div></div></div>";
   }).join("");
   if(hidden>0){
-    html+="<div style=\"background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;\"><div style=\"font-size:32px;margin-bottom:10px\">🔒</div><div style=\"font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:6px\">"+hidden+" more spots hidden</div><div style=\"font-size:13px;color:var(--t2);margin-bottom:16px\">Get Gem Pass to unlock all spots.</div><button onclick=\"openPricing()\" style=\"background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:800;cursor:pointer\">Get Gem Pass — $6.99/mo</button></div>";
+    html+="<div style=\"background:linear-gradient(135deg,#fef2eb,white);border:2px solid var(--oborder);border-radius:20px;padding:24px;text-align:center;margin-top:4px;\"><div style=\"font-size:32px;margin-bottom:10px\">🔒</div><div style=\"font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:6px\">"+hidden+" more spots hidden</div><div style=\"font-size:13px;color:var(--t2);margin-bottom:16px\">Get Gem Pass to unlock all spots.</div><button onclick=\"openLicenseModal()\" style=\"background:var(--orange);color:white;border:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:800;cursor:pointer\">Get Gem Pass — $6.99/mo</button></div>";
   }
   document.getElementById("slist").innerHTML=html;
   // Event delegation backup for mobile
@@ -691,7 +726,7 @@ function renderMap(){
   if(typeof mapboxgl==="undefined"){setTimeout(renderMap,300);return;}
   if(!window.mapboxMap){
     mapboxgl.accessToken="pk.eyJ1IjoibHV4dXJ5MSIsImEiOiJjbW90ajh2eHUwNHpwMnJvbjJkbjRucW8zIn0.2ehlGUpofPDPMdR2FZ118A";
-    window.mapboxMap=new mapboxgl.Map({container:"mapbox-map",style:"mapbox://styles/mapbox/light-v11",center:[-117.929,33.619],zoom:11});
+    window.mapboxMap=new mapboxgl.Map({container:"mapbox-map",style:"mapbox://styles/mapbox/outdoors-v12",center:[-117.929,33.619],zoom:11});
     window.mapboxMap.addControl(new mapboxgl.NavigationControl(),"bottom-right");
     window.mapboxMap.on("load",function(){addMapPins();});
   }else{addMapPins();}
@@ -707,7 +742,7 @@ function addMapPins(){
   window.mapMarkers=[];
   SPOTS.filter(function(s){return s.city.toLowerCase()===S.city.toLowerCase()&&s.lat&&s.lng;}).forEach(function(s){
     var el=document.createElement("div");
-    el.style.cssText="width:36px;height:36px;border-radius:50%;background:"+(s.vegan?"#3d7a47":"#e07b3a")+";border:2.5px solid white;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2)";
+    el.style.cssText="width:42px;height:42px;border-radius:50%;background:"+(s.vegan?"#3d7a47":"#e07b3a")+";border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:transform 0.2s";el.onmouseover=function(){this.style.transform="scale(1.2)"};el.onmouseout=function(){this.style.transform="scale(1)"};
     el.innerHTML=s.emoji||"📍";
     el.onclick=function(){openDetail(s.id);};
     window.mapMarkers.push(new mapboxgl.Marker(el).setLngLat([s.lng,s.lat]).addTo(window.mapboxMap));
@@ -780,9 +815,10 @@ async function submitSpot(){
   toggleSubmitForm();
   toast("🎉 Spot submitted for review! We'll verify it soon.");
 }
-function simulateSubscribe(){window.open("https://artmadrid.gumroad.com/l/ggajk","_blank");}
+function simulateSubscribe(){openLicenseModal();}
 var _t;
 function toast(m){var e=document.getElementById("toast");e.textContent=m;e.classList.add("show");clearTimeout(_t);_t=setTimeout(function(){e.classList.remove("show");},2400);}
+
 
 </script>
 </body>
