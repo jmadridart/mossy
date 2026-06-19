@@ -748,8 +748,9 @@ function addMapPins(){
     (function(s){
       var el=document.createElement("div");
       el.style.cssText="width:42px;height:42px;border-radius:50%;background:"+(s.vegan?"#3d7a47":"#e07b3a")+";border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:transform 0.2s";
-      el.onmouseover=function(){this.style.transform="scale(1.2)"};
-      el.onmouseout=function(){this.style.transform="scale(1)"};
+      el.style.transformOrigin="center center";
+      el.onmouseover=function(){this.style.transform="scale(1.2)";this.style.zIndex="10";};
+      el.onmouseout=function(){this.style.transform="scale(1)";this.style.zIndex="1";};
       el.innerHTML=s.emoji||"📍";
       var sid=s.id;
       el.onclick=function(){openDetail(sid);};
